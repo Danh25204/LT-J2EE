@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/header :: head('Quản lý đồ cổ')}"></head>
+<body class="sb-nav-fixed">
+
+    <div th:replace="~{fragments/header :: topnav}"></div>
+
+    <div id="layoutSidenav">
+        <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+        <div id="layoutSidenav_content">
+            <main>
+                <div class="container-fluid px-4">
+                    <h1 class="mt-4">Quản lý đồ cổ</h1>
+                    <ol class="breadcrumb mb-4">
+                        <li class="breadcrumb-item"><a th:href="@{/dashboard}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Đồ cổ</li>
+                    </ol>
+
+                    <!-- Thông báo -->
+                    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-1"></i>
+                        <span th:text="${successMessage}"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle me-1"></i>
+                        <span th:text="${errorMessage}"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+
+                    <!-- Card tìm kiếm và lọc -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <i class="fas fa-search me-1"></i>
+                            Tìm kiếm &amp; Lọc
+                        </div>
+                        <div class="card-body">
+                            <form th:action="@{/antiques}" method="get" class="row g-3">
+                                <!-- Tìm theo tên hoặc mã -->
+                                <div class="col-md-4">
+                                    <label for="keyword" class="form-label">Tên hoặc mã đồ cổ</label>
+                                    <input type="text" id="keyword" name="keyword"
+                                           th:value="${keyword}"
+                                           class="form-control"
+                                           placeholder="Nhập tên hoặc mã...">
+                                </div>
+
+                                <!-- Lọc theo danh mục -->
+                                <div class="col-md-3">
+                                    <label for="categoryId" class="form-label">Danh mục</label>
+                                    <select id="categoryId" name="categoryId" class="form-select">
+                                        <option value="">-- Tất cả --</option>
+                                        <option th:each="cat : ${categories}"
+                                                th:value="${cat.id}"
+                                                th:text="${cat.tenLoai}"
+                                                th:selected="${cat.id == selectedCategoryId}"></option>
+                                    </select>
+                                </div>
+
+                                <!-- Lọc theo tình trạng -->
+                                <div class="col-md-3">
+                                    <label for="tinhTrang" class="form-label">Tình trạng</label>
+                                    <select id="tinhTrang" name="tinhTrang" class="form-select">
+                                        <option value="">-- Tất cả --</option>
+                                        <option th:each="tt : ${tinhTrangValues}"
+                                                th:value="${tt}"
+                                                th:text="${tt.toString()}"
+                                                th:selected="${tt == selectedTinhTrang}"></option>
+                                    </select>
+                                </div>
+
+                                <!-- Nút tìm kiếm -->
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-search me-1"></i> Tìm kiếm
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Card bảng đồ cổ -->
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-box me-1"></i>
+                                Danh sách đồ cổ
+                                <span class="badge bg-secondary ms-1" th:text="${antiques.size()}">0</span>
+                            </div>
+                            <a th:href="@{/antiques/create}"
+                               class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus me-1"></i> Thêm đồ cổ
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            <div th:if="${antiques.empty}" class="text-center text-muted py-4">
+                                <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                Chưa có đồ cổ nào. Hãy thêm đồ cổ đầu tiên!
+                            </div>
+
+                            <div th:unless="${antiques.empty}" class="table-responsive">
+                                <table class="table table-bordered table-hover align-middle datatable">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th style="width:50px">#</th>
+                                            <th style="width:80px" class="text-center">Ảnh</th>
+                                            <th style="width:120px">Mã đồ cổ</th>
+                                            <th>Tên đồ cổ</th>
+                                            <th style="width:150px">Danh mục</th>
+                                            <th style="width:100px" class="text-center">Năm SX</th>
+                                            <th style="width:110px" class="text-center">Tình trạng</th>
+                                            <th style="width:180px" class="text-center">Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="antique, iterStat : ${antiques}">
+                                            <td th:text="${iterStat.count}"></td>
+                                            <td class="text-center">
+                                                <img th:if="${antique.anhChinh}"
+                                                     th:src="@{'/uploads/' + ${antique.anhChinh}}"
+                                                     alt="Ảnh"
+                                                     class="img-thumbnail"
+                                                     style="width:60px; height:60px; object-fit:cover;">
+                                                <i th:unless="${antique.anhChinh}"
+                                                   class="fas fa-image fa-2x text-muted"></i>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info text-dark fw-semibold"
+                                                      th:text="${antique.maDocCo}"></span>
+                                            </td>
+                                            <td class="fw-semibold" th:text="${antique.tenDocCo}"></td>
+                                            <td>
+                                                <span class="badge bg-secondary"
+                                                      th:text="${antique.category.tenLoai}"></span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span th:if="${antique.namSanXuat != null}"
+                                                      th:text="${antique.namSanXuat}"></span>
+                                                <span th:unless="${antique.namSanXuat != null}"
+                                                      class="text-muted fst-italic">—</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge"
+                                                      th:classappend="${antique.tinhTrang == T(com.example.antique.entity.TinhTrang).TOT} ? 'bg-success' : 
+                                                                      (${antique.tinhTrang == T(com.example.antique.entity.TinhTrang).KHA} ? 'bg-primary' : 
+                                                                      (${antique.tinhTrang == T(com.example.antique.entity.TinhTrang).TRUNG_BINH} ? 'bg-warning' : 'bg-danger'))"
+                                                      th:text="${antique.tinhTrang}"></span>
+                                            </td>
+                                            <td class="text-center">
+                                                <a th:href="@{/antiques/{id}(id=${antique.id})}"
+                                                   class="btn btn-info btn-sm me-1"
+                                                   title="Xem chi tiết">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a th:href="@{/antiques/{id}/edit(id=${antique.id})}"
+                                                   class="btn btn-warning btn-sm me-1"
+                                                   title="Chỉnh sửa">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <form sec:authorize="hasRole('ADMIN')"
+                                                      th:action="@{/antiques/{id}/delete(id=${antique.id})}"
+                                                      method="post" class="d-inline"
+                                                      th:id="'delete-form-' + ${antique.id}">
+                                                    <input type="hidden" th:name="${_csrf.parameterName}"
+                                                           th:value="${_csrf.token}"/>
+                                                    <button type="button"
+                                                            class="btn btn-danger btn-sm delete-btn"
+                                                            th:data-id="${antique.id}"
+                                                            th:data-name="${antique.tenDocCo}"
+                                                            title="Xóa">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+
+            <footer th:replace="~{fragments/footer :: footer}"></footer>
+        </div>
+    </div>
+
+    <!-- Script xác nhận xóa -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    const name = this.getAttribute('data-name');
+                    
+                    if (confirm(`Bạn có chắc muốn xóa đồ cổ "${name}"?\n\nThao tác này không thể hoàn tác!`)) {
+                        document.getElementById('delete-form-' + id).submit();
+                    }
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>

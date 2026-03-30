@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<!-- Form tạo mới / chỉnh sửa người dùng -->
+<!-- isEdit=true → chỉnh sửa | isEdit=false → tạo mới -->
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="vi">
+
+<!-- Fragment head với tiêu đề động: hiển thị 'Chỉnh sửa' hoặc 'Thêm mới' -->
+<head th:replace="~{fragments/header :: head(${isEdit ? 'Chỉnh sửa người dùng' : 'Thêm người dùng mới'})}"></head>
+
+<body>
+<div class="d-flex min-vh-100">
+
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+    <div class="flex-grow-1 d-flex flex-column" style="min-width:0;">
+        <div th:replace="~{fragments/header :: topnav}"></div>
+
+        <main class="flex-grow-1 p-4" style="background:#f8f9fa;">
+
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-3">
+                <ol class="breadcrumb small">
+                    <li class="breadcrumb-item">
+                        <a th:href="@{/dashboard}" class="text-decoration-none">
+                            <i class="bi bi-house me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a th:href="@{/admin/users}" class="text-decoration-none">Quản lý người dùng</a>
+                    </li>
+                    <li class="breadcrumb-item active"
+                        th:text="${isEdit ? 'Chỉnh sửa' : 'Thêm mới'}">Thêm mới</li>
+                </ol>
+            </nav>
+
+            <div class="row justify-content-center">
+                <div class="col-lg-7 col-xl-6">
+                    <div class="card border-0 shadow-sm">
+
+                        <!-- Card header -->
+                        <div class="card-header py-3"
+                             th:class="${isEdit}
+                                 ? 'card-header py-3 bg-warning text-dark'
+                                 : 'card-header py-3 bg-primary text-white'">
+                            <h5 class="mb-0">
+                                <i th:class="${isEdit}
+                                       ? 'bi bi-pencil-square me-2'
+                                       : 'bi bi-person-plus me-2'"></i>
+                                <span th:text="${isEdit ? 'Chỉnh sửa thông tin người dùng' : 'Thêm người dùng mới'}"></span>
+                            </h5>
+                        </div>
+
+                        <div class="card-body p-4">
+                            <!--
+                              th:action: URL thay đổi tùy create hay edit
+                              th:object="${userDTO}": bind form với object userDTO từ controller
+                              th:field="*{...}": shortcut cho th:name + th:value + th:id
+                            -->
+                            <form th:action="${isEdit
+                                    ? '/admin/users/' + userDTO.id + '/edit'
+                                    : '/admin/users/create'}"
+                                  th:object="${userDTO}"
+                                  method="post"
+                                  novalidate>
+
+                                <div class="row g-3">
+
+                                    <!-- Tên đăng nhập -->
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold required">
+                                            <i class="bi bi-person me-1 text-primary"></i>Tên đăng nhập
+                                        </label>
+                                        <input type="text"
+                                               th:field="*{username}"
+                                               th:class="${#fields.hasErrors('username')}
+                                                   ? 'form-control form-control-sm is-invalid'
+                                                   : 'form-control form-control-sm'"
+                                               placeholder="Tối thiểu 3 ký tự"
+                                               th:readonly="${isEdit}">
+                                        <div class="invalid-feedback" th:errors="*{username}"></div>
+                                        <small th:if="${isEdit}" class="text-muted">
+                                            <i class="bi bi-lock me-1"></i>Không thể thay đổi tên đăng nhập
+                                        </small>
+                                    </div>
+
+                                    <!-- Họ và tên -->
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">
+                                            <i class="bi bi-card-text me-1 text-primary"></i>
+                                            Họ và tên <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text"
+                                               th:field="*{fullName}"
+                                               th:class="${#fields.hasErrors('fullName')}
+                                                   ? 'form-control form-control-sm is-invalid'
+                                                   : 'form-control form-control-sm'"
+                                               placeholder="Nguyễn Văn A">
+                                        <div class="invalid-feedback" th:errors="*{fullName}"></div>
+                                    </div>
+
+                                    <!-- Email -->
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">
+                                            <i class="bi bi-envelope me-1 text-primary"></i>Email
+                                        </label>
+                                        <input type="email"
+                                               th:field="*{email}"
+                                               th:class="${#fields.hasErrors('email')}
+                                                   ? 'form-control form-control-sm is-invalid'
+                                                   : 'form-control form-control-sm'"
+                                               placeholder="example@email.com">
+                                        <div class="invalid-feedback" th:errors="*{email}"></div>
+                                    </div>
+
+                                    <!-- Số điện thoại -->
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">
+                                            <i class="bi bi-phone me-1 text-primary"></i>Số điện thoại
+                                        </label>
+                                        <input type="text"
+                                               th:field="*{phone}"
+                                               class="form-control form-control-sm"
+                                               placeholder="0901234567">
+                                    </div>
+
+                                    <!-- Vai trò -->
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">
+                                            <i class="bi bi-shield me-1 text-primary"></i>
+                                            Vai trò <span class="text-danger">*</span>
+                                        </label>
+                                        <select th:field="*{roleName}"
+                                                th:class="${#fields.hasErrors('roleName')}
+                                                    ? 'form-select form-select-sm is-invalid'
+                                                    : 'form-select form-select-sm'">
+                                            <option value="">-- Chọn vai trò --</option>
+                                            <option value="ROLE_ADMIN">
+                                                🛡️ Quản trị viên (Admin)
+                                            </option>
+                                            <option value="ROLE_NHAN_VIEN">
+                                                👤 Nhân viên kho
+                                            </option>
+                                        </select>
+                                        <div class="invalid-feedback" th:errors="*{roleName}"></div>
+                                    </div>
+
+                                    <!-- Trạng thái -->
+                                    <div class="col-md-6 d-flex align-items-end">
+                                        <div class="mb-1">
+                                            <label class="form-label fw-semibold d-block">
+                                                <i class="bi bi-toggle-on me-1 text-primary"></i>Trạng thái
+                                            </label>
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input"
+                                                       type="checkbox"
+                                                       th:field="*{active}"
+                                                       id="activeCheck"
+                                                       role="switch">
+                                                <label class="form-check-label" for="activeCheck">
+                                                    Kích hoạt tài khoản
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Đường kẻ phân cách -->
+                                    <div class="col-12"><hr class="my-1"></div>
+
+                                    <!-- Mật khẩu mới -->
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">
+                                            <i class="bi bi-lock me-1 text-primary"></i>
+                                            Mật khẩu
+                                            <span th:unless="${isEdit}" class="text-danger">*</span>
+                                            <small th:if="${isEdit}" class="text-muted fw-normal">
+                                                (để trống = giữ nguyên)
+                                            </small>
+                                        </label>
+                                        <input type="password"
+                                               th:field="*{password}"
+                                               th:class="${#fields.hasErrors('password')}
+                                                   ? 'form-control form-control-sm is-invalid'
+                                                   : 'form-control form-control-sm'"
+                                               th:placeholder="${isEdit}
+                                                   ? 'Nhập mật khẩu mới nếu muốn thay đổi'
+                                                   : 'Tối thiểu 6 ký tự'"
+                                               autocomplete="new-password">
+                                        <div class="invalid-feedback" th:errors="*{password}"></div>
+                                    </div>
+
+                                    <!-- Xác nhận mật khẩu -->
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">
+                                            <i class="bi bi-lock-fill me-1 text-primary"></i>
+                                            Xác nhận mật khẩu
+                                            <span th:unless="${isEdit}" class="text-danger">*</span>
+                                        </label>
+                                        <input type="password"
+                                               th:field="*{confirmPassword}"
+                                               th:class="${#fields.hasErrors('confirmPassword')}
+                                                   ? 'form-control form-control-sm is-invalid'
+                                                   : 'form-control form-control-sm'"
+                                               placeholder="Nhập lại mật khẩu"
+                                               autocomplete="new-password">
+                                        <div class="invalid-feedback" th:errors="*{confirmPassword}"></div>
+                                    </div>
+
+                                </div>
+
+                                <!-- Buttons -->
+                                <div class="d-flex gap-2 mt-4 pt-2 border-top">
+                                    <button type="submit"
+                                            th:class="${isEdit}
+                                                ? 'btn btn-warning btn-sm fw-semibold px-4'
+                                                : 'btn btn-primary btn-sm fw-semibold px-4'">
+                                        <i th:class="${isEdit} ? 'bi bi-check-lg me-1' : 'bi bi-plus-lg me-1'"></i>
+                                        <span th:text="${isEdit ? 'Cập nhật' : 'Tạo người dùng'}"></span>
+                                    </button>
+                                    <a th:href="@{/admin/users}" class="btn btn-outline-secondary btn-sm px-4">
+                                        <i class="bi bi-arrow-left me-1"></i>Hủy
+                                    </a>
+                                </div>
+
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <div th:replace="~{fragments/footer :: footer}"></div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: scripts}"></div>
+</body>
+</html>

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Quản lý tồn kho')}"></head>
+<body class="sb-nav-fixed">
+
+    <div th:replace="~{fragments/header :: topnav}"></div>
+
+    <div id="layoutSidenav">
+        <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+        <div id="layoutSidenav_content">
+            <main>
+                <div class="container-fluid px-4">
+                    <h1 class="mt-4">
+                        <i class="fas fa-warehouse me-2"></i>Tồn kho
+                    </h1>
+                    <ol class="breadcrumb mb-4">
+                        <li class="breadcrumb-item"><a th:href="@{/dashboard}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Tồn kho</li>
+                    </ol>
+
+                    <!-- Flash messages -->
+                    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-1"></i>
+                        <span th:text="${success}"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle me-1"></i>
+                        <span th:text="${error}"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+
+                    <!-- Statistics Cards -->
+                    <div class="row mb-4">
+                        <div class="col-xl-4 col-md-6">
+                            <div class="card bg-primary text-white mb-4">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="small">Tổng số mặt hàng</div>
+                                            <div class="fs-2 fw-bold" th:text="${totalItems}">0</div>
+                                        </div>
+                                        <div><i class="fas fa-boxes fa-3x opacity-50"></i></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-4 col-md-6">
+                            <div class="card bg-warning text-white mb-4">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="small">Sắp hết hàng</div>
+                                            <div class="fs-2 fw-bold" th:text="${lowStock}">0</div>
+                                        </div>
+                                        <div><i class="fas fa-exclamation-triangle fa-3x opacity-50"></i></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-4 col-md-6">
+                            <div class="card bg-danger text-white mb-4">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="small">Hết hàng</div>
+                                            <div class="fs-2 fw-bold" th:text="${outOfStock}">0</div>
+                                        </div>
+                                        <div><i class="fas fa-times-circle fa-3x opacity-50"></i></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Inventory List Card -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <i class="fas fa-table me-1"></i>
+                            Danh sách tồn kho
+                        </div>
+                        <div class="card-body">
+                            <!-- Filter Buttons -->
+                            <div class="mb-3">
+                                <div class="btn-group" role="group">
+                                    <a th:href="@{/inventory}" 
+                                       th:classappend="${filterActive == 'all'} ? 'active'"
+                                       class="btn btn-outline-primary">
+                                        <i class="fas fa-list me-1"></i> Tất cả
+                                    </a>
+                                    <a th:href="@{/inventory(filter='low')}" 
+                                       th:classappend="${filterActive == 'low'} ? 'active'"
+                                       class="btn btn-outline-warning">
+                                        <i class="fas fa-exclamation-triangle me-1"></i> Sắp hết / Hết hàng
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Table -->
+                            <div class="table-responsive">
+                                <table class="table table-hover table-striped align-middle datatable">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th style="width: 80px;">Ảnh</th>
+                                            <th>Mã đồ cổ</th>
+                                            <th>Tên đồ cổ</th>
+                                            <th>Danh mục</th>
+                                            <th class="text-center">SL tồn</th>
+                                            <th>Vị trí lưu trữ</th>
+                                            <th class="text-center">Trạng thái</th>
+                                            <th class="text-center">Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:if="${inventories == null or inventories.isEmpty()}">
+                                            <td colspan="8" class="text-center text-muted py-4">
+                                                <i class="fas fa-inbox fa-3x mb-2"></i>
+                                                <p>Chưa có dữ liệu tồn kho</p>
+                                            </td>
+                                        </tr>
+                                        <tr th:each="inv : ${inventories}">
+                                            <!-- Ảnh -->
+                                            <td>
+                                                <img th:if="${inv.anhChinh != null and !inv.anhChinh.isEmpty()}"
+                                                     th:src="@{'/uploads/' + ${inv.anhChinh}}" 
+                                                     th:alt="${inv.tenDocCo}"
+                                                     class="img-thumbnail"
+                                                     style="width: 60px; height: 60px; object-fit: cover;">
+                                                <div th:unless="${inv.anhChinh != null and !inv.anhChinh.isEmpty()}"
+                                                     class="bg-secondary text-white text-center rounded"
+                                                     style="width: 60px; height: 60px; line-height: 60px;">
+                                                    <i class="fas fa-image"></i>
+                                                </div>
+                                            </td>
+                                            
+                                            <!-- Mã -->
+                                            <td>
+                                                <span class="font-monospace fw-bold" th:text="${inv.maDocCo}"></span>
+                                            </td>
+                                            
+                                            <!-- Tên -->
+                                            <td>
+                                                <a th:href="@{/antiques/{id}(id=${inv.antiqueId})}" 
+                                                   class="text-decoration-none"
+                                                   th:text="${inv.tenDocCo}"></a>
+                                            </td>
+                                            
+                                            <!-- Danh mục -->
+                                            <td>
+                                                <span class="badge bg-info" th:text="${inv.categoryName}"></span>
+                                            </td>
+                                            
+                                            <!-- Số lượng tồn -->
+                                            <td class="text-center">
+                                                <span class="fs-5 fw-bold" 
+                                                      th:classappend="${inv.statusBadge == 'HET'} ? 'text-danger' : (${inv.statusBadge == 'THAP'} ? 'text-warning' : 'text-success')"
+                                                      th:text="${inv.soLuongTon}"></span>
+                                            </td>
+                                            
+                                            <!-- Vị trí -->
+                                            <td>
+                                                <span th:text="${inv.viTriLuuTru}" 
+                                                      class="text-muted fst-italic"
+                                                      th:unless="${inv.viTriLuuTru != null and !inv.viTriLuuTru.isEmpty()}">
+                                                    Chưa xác định
+                                                </span>
+                                                <span th:if="${inv.viTriLuuTru != null and !inv.viTriLuuTru.isEmpty()}"
+                                                      th:text="${inv.viTriLuuTru}"></span>
+                                            </td>
+                                            
+                                            <!-- Trạng thái -->
+                                            <td class="text-center">
+                                                <span class="badge" 
+                                                      th:classappend="'bg-' + ${inv.statusClass}"
+                                                      th:text="${inv.statusText}"></span>
+                                            </td>
+                                            
+                                            <!-- Actions -->
+                                            <td class="text-center">
+                                                <button class="btn btn-sm btn-outline-primary" 
+                                                        data-bs-toggle="modal" 
+                                                        th:data-bs-target="|#editModal${inv.inventoryId}|"
+                                                        title="Cập nhật vị trí/ghi chú">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+
+            <footer th:replace="~{fragments/footer :: footer}"></footer>
+        </div>
+    </div>
+
+    <!-- Edit Modal cho mỗi item -->
+    <div th:each="inv : ${inventories}">
+        <div class="modal fade" th:id="|editModal${inv.inventoryId}|" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form th:action="@{/inventory/{id}/update(id=${inv.inventoryId})}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title">
+                                <i class="fas fa-edit me-2"></i>
+                                Cập nhật tồn kho
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Đồ cổ</label>
+                                <p class="form-control-plaintext fw-bold" th:text="${inv.tenDocCo}"></p>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Số lượng tồn hiện tại</label>
+                                <p class="form-control-plaintext">
+                                    <span class="fs-4 fw-bold" 
+                                          th:classappend="${inv.statusClass == 'danger'} ? 'text-danger' : (${inv.statusClass == 'warning'} ? 'text-warning' : 'text-success')"
+                                          th:text="${inv.soLuongTon}"></span>
+                                    <span class="text-muted ms-2">(Không thể sửa trực tiếp)</span>
+                                </p>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="viTriLuuTru" class="form-label fw-semibold">
+                                    Vị trí lưu trữ
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       name="viTriLuuTru"
+                                       th:value="${inv.viTriLuuTru}"
+                                       placeholder="VD: Kệ A - Tầng 2 - Ô 5">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="ghiChu" class="form-label fw-semibold">
+                                    Ghi chú
+                                </label>
+                                <textarea class="form-control" 
+                                          name="ghiChu"
+                                          rows="3"
+                                          placeholder="Ghi chú về tình trạng lưu kho..."
+                                          th:text="${inv.ghiChu}"></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                <i class="fas fa-times me-1"></i> Hủy
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Lưu thay đổi
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Bootstrap JavaScript -->
+    <div th:replace="~{fragments/footer :: scripts}"></div>
+
+</body>
+</html>

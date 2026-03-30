@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Chi tiết đồ cổ')}"></head>
+<body class="sb-nav-fixed">
+
+    <div th:replace="~{fragments/header :: topnav}"></div>
+
+    <div id="layoutSidenav">
+        <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+        <div id="layoutSidenav_content">
+            <main>
+                <div class="container-fluid px-4">
+                    <h1 class="mt-4">Chi tiết đồ cổ</h1>
+                    <ol class="breadcrumb mb-4">
+                        <li class="breadcrumb-item"><a th:href="@{/dashboard}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/antiques}">Đồ cổ</a></li>
+                        <li class="breadcrumb-item active">Chi tiết</li>
+                    </ol>
+
+                    <div class="row">
+                        <!-- Cột trái: Ảnh -->
+                        <div class="col-md-4">
+                            <div class="card mb-4">
+                                <div class="card-header bg-dark text-white">
+                                    <i class="fas fa-image me-1"></i>
+                                    Ảnh hiện vật
+                                </div>
+                                <div class="card-body text-center">
+                                    <img th:if="${antique.anhChinh}"
+                                         th:src="@{'/uploads/' + ${antique.anhChinh}}"
+                                         th:alt="${antique.tenDocCo}"
+                                         class="img-fluid rounded shadow"
+                                         style="max-height: 400px; object-fit: contain;">
+                                    <div th:unless="${antique.anhChinh}" class="py-5">
+                                        <i class="fas fa-image fa-5x text-muted"></i>
+                                        <p class="text-muted mt-3">Chưa có ảnh</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card thông tin tồn kho -->
+                            <div th:if="${antique.inventory}" class="card mb-4">
+                                <div class="card-header bg-success text-white">
+                                    <i class="fas fa-warehouse me-1"></i>
+                                    Tồn kho
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-sm mb-0">
+                                        <tr>
+                                            <th style="width:150px">Số lượng tồn:</th>
+                                            <td>
+                                                <span class="badge"
+                                                      th:classappend="${antique.inventory.soLuongTon > 0} ? 'bg-success' : 'bg-secondary'"
+                                                      style="font-size:1.1em"
+                                                      th:text="${antique.inventory.soLuongTon}">0</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>Vị trí:</th>
+                                            <td>
+                                                <span th:if="${antique.inventory.viTriLuuTru}"
+                                                      th:text="${antique.inventory.viTriLuuTru}"></span>
+                                                <span th:unless="${antique.inventory.viTriLuuTru}"
+                                                      class="text-muted fst-italic">Chưa xác định</span>
+                                            </td>
+                                        </tr>
+                                        <tr th:if="${antique.inventory.ghiChu}">
+                                            <th>Ghi chú:</th>
+                                            <td th:text="${antique.inventory.ghiChu}"></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cột phải: Thông tin chi tiết -->
+                        <div class="col-md-8">
+                            <div class="card mb-4">
+                                <div class="card-header bg-dark text-white">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Thông tin chi tiết
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-bordered">
+                                        <tbody>
+                                            <tr>
+                                                <th style="width:200px" class="table-light">Mã đồ cổ</th>
+                                                <td>
+                                                    <span class="badge bg-info text-dark fs-6"
+                                                          th:text="${antique.maDocCo}"></span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th class="table-light">Tên đồ cổ</th>
+                                                <td class="fw-bold fs-5" th:text="${antique.tenDocCo}"></td>
+                                            </tr>
+                                            <tr>
+                                                <th class="table-light">Danh mục</th>
+                                                <td>
+                                                    <span class="badge bg-secondary fs-6"
+                                                          th:text="${antique.category.tenLoai}"></span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th class="table-light">Năm sản xuất</th>
+                                                <td>
+                                                    <span th:if="${antique.namSanXuat}"
+                                                          th:text="${antique.namSanXuat}"></span>
+                                                    <span th:unless="${antique.namSanXuat}"
+                                                          class="text-muted fst-italic">Không rõ</span>
+                                                </td>
+                                            </tr>
+                                            <tr th:if="${antique.trieuDai}">
+                                                <th class="table-light">Triều đại / Thời kỳ</th>
+                                                <td th:text="${antique.trieuDai}"></td>
+                                            </tr>
+                                            <tr th:if="${antique.xuatXu}">
+                                                <th class="table-light">Xuất xứ</th>
+                                                <td th:text="${antique.xuatXu}"></td>
+                                            </tr>
+                                            <tr th:if="${antique.chatLieu}">
+                                                <th class="table-light">Chất liệu</th>
+                                                <td th:text="${antique.chatLieu}"></td>
+                                            </tr>
+                                            <tr th:if="${antique.kichThuoc}">
+                                                <th class="table-light">Kích thước</th>
+                                                <td th:text="${antique.kichThuoc}"></td>
+                                            </tr>
+                                            <tr>
+                                                <th class="table-light">Tình trạng</th>
+                                                <td>
+                                                    <span class="badge fs-6"
+                                                          th:classappend="${antique.tinhTrang == T(com.example.antique.entity.TinhTrang).TOT} ? 'bg-success' : 
+                                                                          (${antique.tinhTrang == T(com.example.antique.entity.TinhTrang).KHA} ? 'bg-primary' : 
+                                                                          (${antique.tinhTrang == T(com.example.antique.entity.TinhTrang).TRUNG_BINH} ? 'bg-warning text-dark' : 'bg-danger'))"
+                                                          th:text="${antique.tinhTrang}"></span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th class="table-light">Số lượng mặc định</th>
+                                                <td th:text="${antique.soLuongMacDinh}"></td>
+                                            </tr>
+                                            <tr th:if="${antique.giaNhap}">
+                                                <th class="table-light">Giá nhập</th>
+                                                <td>
+                                                    <span class="text-danger fw-bold"
+                                                          th:text="${#numbers.formatDecimal(antique.giaNhap, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></span>
+                                                </td>
+                                            </tr>
+                                            <tr th:if="${antique.giaBanDuKien}">
+                                                <th class="table-light">Giá bán dự kiến</th>
+                                                <td>
+                                                    <span class="text-success fw-bold"
+                                                          th:text="${#numbers.formatDecimal(antique.giaBanDuKien, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></span>
+                                                </td>
+                                            </tr>
+                                            <tr th:if="${antique.moTa}">
+                                                <th class="table-light align-top">Mô tả</th>
+                                                <td>
+                                                    <div style="white-space: pre-wrap;" th:text="${antique.moTa}"></div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th class="table-light">Ngày tạo</th>
+                                                <td th:text="${#temporals.format(antique.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+                                            </tr>
+                                            <tr>
+                                                <th class="table-light">Cập nhật lần cuối</th>
+                                                <td th:text="${#temporals.format(antique.updatedAt, 'dd/MM/yyyy HH:mm')}"></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Nút hành động -->
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end mb-4">
+                                <a th:href="@{/antiques}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-1"></i> Quay lại
+                                </a>
+                                <a th:href="@{/antiques/{id}/edit(id=${antique.id})}"
+                                   class="btn btn-warning">
+                                    <i class="fas fa-edit me-1"></i> Chỉnh sửa
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+
+            <footer th:replace="~{fragments/footer :: footer}"></footer>
+        </div>
+    </div>
+
+</body>
+</html>

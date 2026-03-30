@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<!--
+  Fragment: fragments/footer
+  Chứa 2 fragments:
+    1. footer  → HTML footer bar
+    2. scripts → JavaScript imports (đặt cuối body để load nhanh)
+
+  Cách sử dụng:
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <div th:replace="~{fragments/footer :: scripts}"></div>
+-->
+<html xmlns:th="http://www.thymeleaf.org">
+
+<!-- Fragment 1: Footer bar -->
+<footer th:fragment="footer" class="bg-white border-top p-2 mt-auto">
+    <div class="text-center text-muted" style="font-size:0.8rem;">
+        &copy; 2024 <strong>Kho Đồ Cổ</strong> &mdash; Hệ thống Quản lý Kho
+    </div>
+</footer>
+
+<!-- Fragment 2: JavaScript imports (đặt cuối </body> để page load nhanh hơn) -->
+<th:block th:fragment="scripts">
+    <!-- Bootstrap 5.3 JS Bundle (bao gồm Popper.js cho dropdown, modal...) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- jQuery (một số plugin cần) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- Custom JS -->
+    <script th:src="@{/js/main.js}"></script>
+
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('table.datatable').DataTable({
+                language: {
+                    lengthMenu: 'Hiển thị _MENU_ dòng',
+                    zeroRecords: 'Không tìm thấy dữ liệu',
+                    info: 'Hiển thị _START_ - _END_ / _TOTAL_ dòng',
+                    infoEmpty: 'Không có dữ liệu',
+                    infoFiltered: '(lọc từ _MAX_ dòng)',
+                    search: 'Tìm kiếm:',
+                    paginate: { first: 'Đầu', last: 'Cuối', next: 'Sau', previous: 'Trước' }
+                },
+                pageLength: 10,
+                order: []
+            });
+        });
+    </script>
+</th:block>
+
+</html>

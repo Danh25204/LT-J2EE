@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Báo Cáo Thống Kê')}"></head>
+<body class="sb-nav-fixed">
+
+    <div th:replace="~{fragments/header :: topnav}"></div>
+
+    <div id="layoutSidenav">
+        <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+        <div id="layoutSidenav_content">
+            <main>
+                <div class="container-fluid px-4">
+                    <h1 class="mt-4">
+                        <i class="bi bi-bar-chart-line me-2 text-primary"></i>Báo Cáo Thống Kê
+                    </h1>
+                    <ol class="breadcrumb mb-4">
+                        <li class="breadcrumb-item"><a th:href="@{/dashboard}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Báo cáo</li>
+                    </ol>
+
+                    <!-- ===== TỔNG QUAN KHO (4 cards) ===== -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body d-flex align-items-center gap-3">
+                                    <div class="rounded-3 p-3 bg-primary bg-opacity-10">
+                                        <i class="bi bi-gem fs-3 text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-muted small">Tổng đồ cổ</div>
+                                        <div class="fs-3 fw-bold lh-1 mt-1" th:text="${totalAntiques}">0</div>
+                                        <small class="text-muted">hiện vật</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body d-flex align-items-center gap-3">
+                                    <div class="rounded-3 p-3 bg-success bg-opacity-10">
+                                        <i class="bi bi-boxes fs-3 text-success"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-muted small">Còn trong kho</div>
+                                        <div class="fs-3 fw-bold lh-1 mt-1" th:text="${totalAntiquesConKho}">0</div>
+                                        <small class="text-muted">loại đồ cổ · <span th:text="${tongSoLuongTon}">0</span> chiếc</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body d-flex align-items-center gap-3">
+                                    <div class="rounded-3 p-3 bg-warning bg-opacity-10">
+                                        <i class="bi bi-currency-dollar fs-3 text-warning"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-muted small">Tổng giá trị kho</div>
+                                        <div class="fw-bold lh-1 mt-1"
+                                             th:text="${#numbers.formatDecimal(tongGiaTriKho, 0, 'COMMA', 0, 'POINT') + ' ₫'}">0 ₫</div>
+                                        <small class="text-muted">VNĐ</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body d-flex align-items-center gap-3">
+                                    <div class="rounded-3 p-3 bg-info bg-opacity-10">
+                                        <i class="bi bi-calendar-month fs-3 text-info"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-muted small">Tháng <span th:text="${thangHienTai}"></span></div>
+                                        <div class="fs-3 fw-bold lh-1 mt-1">
+                                            <span th:text="${monthlyImports}">0</span>
+                                            <small class="fs-6 text-muted">nhập</small>
+                                            /
+                                            <span th:text="${monthlyExports}">0</span>
+                                            <small class="fs-6 text-muted">xuất</small>
+                                        </div>
+                                        <small class="text-muted">phiếu</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== NHẬP/XUẤT THÁNG NÀY ===== -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0"><i class="bi bi-box-arrow-in-down me-2"></i>Nhập kho tháng <span th:text="${thangHienTai}"></span></h6>
+                                </div>
+                                <div class="card-body text-center py-4">
+                                    <div class="fs-1 fw-bold text-success"
+                                         th:text="${#numbers.formatDecimal(tongGiaTriNhapThang, 0, 'COMMA', 0, 'POINT') + ' ₫'}">0 ₫</div>
+                                    <p class="text-muted mb-0"><span th:text="${monthlyImports}">0</span> phiếu nhập hợp lệ</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-header bg-danger text-white">
+                                    <h6 class="mb-0"><i class="bi bi-box-arrow-up me-2"></i>Xuất kho tháng <span th:text="${thangHienTai}"></span></h6>
+                                </div>
+                                <div class="card-body text-center py-4">
+                                    <div class="fs-1 fw-bold text-danger"
+                                         th:text="${#numbers.formatDecimal(tongGiaTriXuatThang, 0, 'COMMA', 0, 'POINT') + ' ₫'}">0 ₫</div>
+                                    <p class="text-muted mb-0"><span th:text="${monthlyExports}">0</span> phiếu xuất hợp lệ</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== BIỂU ĐỒ 6 THÁNG + DANH MỤC ===== -->
+                    <div class="row g-3 mb-4">
+                        <!-- Biểu đồ nhập/xuất 6 tháng -->
+                        <div class="col-lg-8">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-header bg-white border-bottom">
+                                    <h6 class="mb-0 fw-semibold">
+                                        <i class="bi bi-graph-up me-2 text-primary"></i>
+                                        Nhập/Xuất kho 6 tháng gần nhất
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="chartNhapXuat" style="max-height:280px;"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Biểu đồ đồ cổ theo danh mục -->
+                        <div class="col-lg-4">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-header bg-white border-bottom">
+                                    <h6 class="mb-0 fw-semibold">
+                                        <i class="bi bi-pie-chart me-2 text-warning"></i>
+                                        Đồ cổ theo danh mục
+                                    </h6>
+                                </div>
+                                <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                                    <canvas id="chartDanhMuc" style="max-height:260px;"></canvas>
+                                    <!-- Nếu không có dữ liệu -->
+                                    <p th:if="${countByCategory.isEmpty()}" class="text-muted mt-3">
+                                        <i class="bi bi-inbox"></i> Chưa có dữ liệu
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== BẢNG DANH MỤC ===== -->
+                    <div class="card shadow-sm mb-5" th:unless="${countByCategory.isEmpty()}">
+                        <div class="card-header bg-white border-bottom">
+                            <h6 class="mb-0 fw-semibold">
+                                <i class="bi bi-table me-2 text-secondary"></i>
+                                Chi tiết đồ cổ theo danh mục
+                            </h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-3">Danh mục</th>
+                                        <th class="text-end pe-3">Số lượng</th>
+                                        <th style="width:40%;">Tỷ lệ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="entry : ${countByCategory}">
+                                        <td class="ps-3" th:text="${entry.key}"></td>
+                                        <td class="text-end pe-3 fw-bold" th:text="${entry.value}"></td>
+                                        <td>
+                                            <div class="progress" style="height:18px;">
+                                                <div class="progress-bar bg-primary"
+                                                     th:style="'width:' + (${totalAntiques} > 0 ? ${entry.value * 100 / totalAntiques} : 0) + '%'"
+                                                     th:text="${totalAntiques} > 0 ? ${#numbers.formatDecimal(entry.value * 100.0 / totalAntiques, 0, 'COMMA', 1, 'POINT') + '%'} : '0%'">
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tfoot class="table-light">
+                                    <tr>
+                                        <td class="ps-3 fw-bold">Tổng</td>
+                                        <td class="text-end pe-3 fw-bold" th:text="${totalAntiques}"></td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+
+            <footer th:replace="~{fragments/footer :: footer}"></footer>
+        </div>
+    </div>
+
+    <th:block th:replace="~{fragments/footer :: scripts}"></th:block>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <script th:inline="javascript">
+        // ===== DỮ LIỆU TỪ SERVER =====
+        const last6Months = /*[[${last6Months}]]*/ {};
+        const countByCategory = /*[[${countByCategory}]]*/ {};
+
+        // ===== BIỂU ĐỒ NHẬP/XUẤT 6 THÁNG =====
+        const labels = Object.keys(last6Months);
+        const nhapData = labels.map(k => last6Months[k].nhap || 0);
+        const xuatData = labels.map(k => last6Months[k].xuat || 0);
+
+        new Chart(document.getElementById('chartNhapXuat'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Nhập kho (₫)',
+                        data: nhapData,
+                        backgroundColor: 'rgba(25, 135, 84, 0.7)',
+                        borderColor: 'rgba(25, 135, 84, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Xuất kho (₫)',
+                        data: xuatData,
+                        backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                        borderColor: 'rgba(220, 53, 69, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                return ctx.dataset.label + ': ' +
+                                    ctx.parsed.y.toLocaleString('vi-VN') + ' ₫';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(val) {
+                                if (val >= 1000000) return (val/1000000).toFixed(1) + 'M';
+                                if (val >= 1000) return (val/1000).toFixed(0) + 'K';
+                                return val;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // ===== BIỂU ĐỒ DONUT DANH MỤC =====
+        const catLabels = Object.keys(countByCategory);
+        const catData = catLabels.map(k => countByCategory[k] || 0);
+        const palette = [
+            '#0d6efd','#198754','#dc3545','#ffc107','#0dcaf0',
+            '#6f42c1','#fd7e14','#20c997','#6c757d','#d63384'
+        ];
+
+        if (catLabels.length > 0) {
+            new Chart(document.getElementById('chartDanhMuc'), {
+                type: 'doughnut',
+                data: {
+                    labels: catLabels,
+                    datasets: [{
+                        data: catData,
+                        backgroundColor: palette.slice(0, catLabels.length),
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12 } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                    const pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : 0;
+                                    return ctx.label + ': ' + ctx.parsed + ' (' + pct + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head(${pageTitle})}"></head>
+<body class="sb-nav-fixed">
+
+    <div th:replace="~{fragments/header :: topnav}"></div>
+
+    <div id="layoutSidenav">
+        <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+        <div id="layoutSidenav_content">
+            <main>
+                <div class="container-fluid px-4">
+                    <h1 class="mt-4" th:text="${pageTitle}">Form danh mục</h1>
+                    <ol class="breadcrumb mb-4">
+                        <li class="breadcrumb-item"><a th:href="@{/dashboard}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/categories}">Danh mục</a></li>
+                        <li class="breadcrumb-item active" th:text="${isEdit} ? 'Chỉnh sửa' : 'Thêm mới'"></li>
+                    </ol>
+
+                    <div class="row justify-content-center">
+                        <div class="col-lg-7">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <i class="fas fa-tag me-1"></i>
+                                    <span th:text="${isEdit} ? 'Chỉnh sửa danh mục' : 'Thêm danh mục mới'"></span>
+                                </div>
+                                <div class="card-body">
+
+                                    <!-- ACTION: nếu edit thì POST /{id}/edit, nếu tạo mới thì POST /create -->
+                                    <form th:action="${isEdit}
+                                                     ? @{/categories/{id}/edit(id=${categoryDTO.id})}
+                                                     : @{/categories/create}"
+                                          th:object="${categoryDTO}"
+                                          method="post"
+                                          novalidate>
+
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                                        <!-- Mã loại -->
+                                        <div class="mb-3">
+                                            <label for="maLoai" class="form-label fw-semibold">
+                                                Mã loại <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="text" id="maLoai"
+                                                   th:field="*{maLoai}"
+                                                   th:classappend="${#fields.hasErrors('maLoai')} ? ' is-invalid'"
+                                                   class="form-control text-uppercase"
+                                                   placeholder="VD: GOM, GO, KIM_LOAI"
+                                                   th:readonly="${isEdit}"
+                                                   maxlength="20"/>
+                                            <!-- Không cho đổi mã khi edit để tránh ảnh hưởng dữ liệu cũ -->
+                                            <div th:if="${isEdit}" class="form-text text-muted">
+                                                <i class="fas fa-lock me-1"></i>Mã loại không thể thay đổi sau khi tạo.
+                                            </div>
+                                            <div class="invalid-feedback" th:errors="*{maLoai}"></div>
+                                        </div>
+
+                                        <!-- Tên loại -->
+                                        <div class="mb-3">
+                                            <label for="tenLoai" class="form-label fw-semibold">
+                                                Tên loại <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="text" id="tenLoai"
+                                                   th:field="*{tenLoai}"
+                                                   th:classappend="${#fields.hasErrors('tenLoai')} ? ' is-invalid'"
+                                                   class="form-control"
+                                                   placeholder="VD: Gốm sứ, Đồ gỗ, Kim loại..."
+                                                   maxlength="100"/>
+                                            <div class="invalid-feedback" th:errors="*{tenLoai}"></div>
+                                        </div>
+
+                                        <!-- Mô tả -->
+                                        <div class="mb-4">
+                                            <label for="moTa" class="form-label fw-semibold">Mô tả</label>
+                                            <textarea id="moTa"
+                                                      th:field="*{moTa}"
+                                                      class="form-control"
+                                                      rows="4"
+                                                      placeholder="Mô tả ngắn về loại đồ cổ này (tuỳ chọn)..."
+                                                      maxlength="2000"></textarea>
+                                            <div class="form-text">
+                                                <span id="moTaCount">0</span>/2000 ký tự
+                                            </div>
+                                        </div>
+
+                                        <!-- Nút hành động -->
+                                        <div class="d-flex gap-2">
+                                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                                <i class="fas fa-save me-1"></i>
+                                                <span th:text="${isEdit} ? 'Cập nhật' : 'Thêm mới'"></span>
+                                            </button>
+                                            <a th:href="@{/categories}" class="btn btn-secondary">
+                                                <i class="fas fa-arrow-left me-1"></i> Quay lại
+                                            </a>
+                                        </div>
+                                    </form>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <div th:replace="~{fragments/footer :: footer}"></div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: scripts}"></div>
+
+    <script>
+        // Auto uppercase mã loại khi gõ
+        const maLoaiInput = document.getElementById('maLoai');
+        if (maLoaiInput && !maLoaiInput.readOnly) {
+            maLoaiInput.addEventListener('input', function () {
+                const pos = this.selectionStart;
+                this.value = this.value.toUpperCase().replace(/[^A-Z0-9_]/g, '');
+                this.setSelectionRange(pos, pos);
+            });
+        }
+
+        // Đếm ký tự mô tả
+        const moTaTextarea = document.getElementById('moTa');
+        const moTaCount    = document.getElementById('moTaCount');
+        function updateCount() {
+            moTaCount.textContent = (moTaTextarea.value || '').length;
+        }
+        updateCount();
+        moTaTextarea.addEventListener('input', updateCount);
+
+        // Disable nút submit khi đang xử lý
+        document.querySelector('form').addEventListener('submit', function () {
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang xử lý...';
+        });
+    </script>
+</body>
+</html>

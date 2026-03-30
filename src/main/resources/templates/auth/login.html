@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<!--
+  Trang đăng nhập - KHÔNG dùng layout chung (không có sidebar/topnav)
+  Thiết kế: màn hình full, card login ở giữa, gradient background
+-->
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập | Kho Đồ Cổ</title>
+
+    <!-- Bootstrap 5.3 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-card {
+            border: none;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+            max-width: 420px;
+            width: 100%;
+        }
+        .login-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 2rem;
+            text-align: center;
+        }
+        .form-control:focus, .form-control-lg:focus {
+            border-color: #764ba2;
+            box-shadow: 0 0 0 0.2rem rgba(118,75,162,.25);
+        }
+        .btn-login {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            transition: opacity 0.2s;
+        }
+        .btn-login:hover { opacity: 0.9; }
+        .input-group-text { cursor: pointer; }
+    </style>
+</head>
+
+<body>
+<div class="container px-3">
+    <div class="d-flex justify-content-center">
+        <div class="login-card w-100">
+
+            <!-- Header card -->
+            <div class="login-header text-white">
+                <i class="bi bi-archive-fill text-warning mb-2 d-block" style="font-size:3rem;"></i>
+                <h3 class="fw-bold mb-1">Kho Đồ Cổ</h3>
+                <p class="mb-0 opacity-75 small">Hệ thống Quản lý Kho Hàng</p>
+            </div>
+
+            <!-- Body card - form đăng nhập -->
+            <div class="card-body bg-white p-4">
+
+                <!-- Thông báo lỗi (khi sai username/password) -->
+                <div th:if="${loginError}"
+                     class="alert alert-danger d-flex align-items-center gap-2 py-2" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+                    <span th:text="${loginError}"></span>
+                </div>
+
+                <!-- Thông báo đăng xuất thành công -->
+                <div th:if="${logoutMessage}"
+                     class="alert alert-success d-flex align-items-center gap-2 py-2" role="alert">
+                    <i class="bi bi-check-circle-fill flex-shrink-0"></i>
+                    <span th:text="${logoutMessage}"></span>
+                </div>
+
+                <!--
+                  Form đăng nhập:
+                  - action="/auth/login" phải khớp với loginProcessingUrl trong SecurityConfig
+                  - Spring Security tự xử lý POST, không cần controller method cho POST
+                  - th:action="@{...}" tự động thêm CSRF token (ẩn trong form)
+                -->
+                <form th:action="@{/auth/login}" method="post" novalidate>
+
+                    <!-- Tên đăng nhập -->
+                    <div class="mb-3">
+                        <label for="username" class="form-label fw-semibold">
+                            <i class="bi bi-person me-1 text-primary"></i>Tên đăng nhập
+                        </label>
+                        <input type="text"
+                               id="username"
+                               name="username"
+                               class="form-control form-control-sm"
+                               placeholder="Nhập tên đăng nhập"
+                               autocomplete="username"
+                               required
+                               autofocus>
+                    </div>
+
+                    <!-- Mật khẩu với nút hiện/ẩn -->
+                    <div class="mb-4">
+                        <label for="password" class="form-label fw-semibold">
+                            <i class="bi bi-lock me-1 text-primary"></i>Mật khẩu
+                        </label>
+                        <div class="input-group input-group-sm">
+                            <input type="password"
+                                   id="password"
+                                   name="password"
+                                   class="form-control"
+                                   placeholder="Nhập mật khẩu"
+                                   autocomplete="current-password"
+                                   required>
+                            <button class="btn btn-outline-secondary"
+                                    type="button"
+                                    id="togglePassword"
+                                    title="Hiện/ẩn mật khẩu">
+                                <i class="bi bi-eye" id="eyeIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Nút đăng nhập -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-login btn-sm text-white py-2">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Đăng nhập
+                        </button>
+                    </div>
+
+                </form>
+
+                <!-- Thông tin tài khoản mẫu (chỉ dùng khi phát triển/demo) -->
+                <div class="mt-3 p-2 rounded bg-light border">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        <strong>Tài khoản mặc định:</strong><br>
+                        Admin: <code>admin</code> / <code>admin123</code><br>
+                        Nhân viên: <code>nhanvien1</code> / <code>123456</code>
+                    </small>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Toggle hiện/ẩn mật khẩu
+    const toggleBtn = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    const eyeIcon = document.getElementById('eyeIcon');
+
+    toggleBtn.addEventListener('click', function () {
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            eyeIcon.classList.replace('bi-eye', 'bi-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            eyeIcon.classList.replace('bi-eye-slash', 'bi-eye');
+        }
+    });
+</script>
+</body>
+</html>

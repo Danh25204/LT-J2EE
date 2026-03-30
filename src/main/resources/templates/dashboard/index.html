@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<!--
+  Trang Dashboard - trang chính sau khi đăng nhập.
+  Hiển thị các thống kê tổng quan (sẽ bổ sung dữ liệu thực ở Phase 8).
+-->
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="vi">
+
+<!--
+  th:replace: thay thế toàn bộ thẻ <head> bằng fragment head từ fragments/header.html
+  Tham số 'Dashboard' = tiêu đề trang
+-->
+<head th:replace="~{fragments/header :: head('Dashboard')}"></head>
+
+<body>
+<div class="d-flex min-vh-100">
+
+    <!-- ===== SIDEBAR ===== -->
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+    <!-- ===== NỘI DUNG CHÍNH ===== -->
+    <div class="flex-grow-1 d-flex flex-column" style="min-width:0;">
+
+        <!-- Top navbar -->
+        <div th:replace="~{fragments/header :: topnav}"></div>
+
+        <!-- Page content -->
+        <main class="flex-grow-1 p-4" style="background:#f8f9fa;">
+
+            <!-- Welcome greeting -->
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div>
+                    <h5 class="fw-bold mb-0">
+                        Xin chào,
+                        <span sec:authentication="name" class="text-primary">Admin</span>!
+                        <span class="fs-5">👋</span>
+                    </h5>
+                    <small class="text-muted">Tổng quan hệ thống quản lý kho đồ cổ</small>
+                </div>
+                <!-- Ngày hiện tại -->
+                <div class="text-end d-none d-md-block">
+                    <div class="fw-semibold" id="currentDate"></div>
+                    <small class="text-muted" id="currentTimeDisplay"></small>
+                </div>
+            </div>
+
+            <!-- ===== THỐNG KÊ TỔNG QUAN (4 cards) ===== -->
+            <div class="row g-3 mb-4">
+
+                <!-- Card 1: Tổng đồ cổ -->
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body d-flex align-items-center gap-3">
+                            <div class="rounded-3 p-3 bg-primary bg-opacity-10">
+                                <i class="bi bi-gem fs-3 text-primary"></i>
+                            </div>
+                            <div>
+                                <div class="text-muted small">Tổng đồ cổ</div>
+                                <div class="fs-3 fw-bold lh-1 mt-1"
+                                     th:text="${totalAntiques ?: 0}">0</div>
+                                <small class="text-muted">hiện vật</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Phiếu nhập tháng này -->
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body d-flex align-items-center gap-3">
+                            <div class="rounded-3 p-3 bg-success bg-opacity-10">
+                                <i class="bi bi-box-arrow-in-down fs-3 text-success"></i>
+                            </div>
+                            <div>
+                                <div class="text-muted small">Nhập kho tháng này</div>
+                                <div class="fs-3 fw-bold lh-1 mt-1"
+                                     th:text="${monthlyImports ?: 0}">0</div>
+                                <small class="text-muted">phiếu nhập</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Phiếu xuất tháng này -->
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body d-flex align-items-center gap-3">
+                            <div class="rounded-3 p-3 bg-danger bg-opacity-10">
+                                <i class="bi bi-box-arrow-up fs-3 text-danger"></i>
+                            </div>
+                            <div>
+                                <div class="text-muted small">Xuất kho tháng này</div>
+                                <div class="fs-3 fw-bold lh-1 mt-1"
+                                     th:text="${monthlyExports ?: 0}">0</div>
+                                <small class="text-muted">phiếu xuất</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Tổng giá trị kho -->
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body d-flex align-items-center gap-3">
+                            <div class="rounded-3 p-3 bg-warning bg-opacity-10">
+                                <i class="bi bi-currency-dollar fs-3 text-warning"></i>
+                            </div>
+                            <div>
+                                <div class="text-muted small">Tổng giá trị kho</div>
+                                <div class="fw-bold lh-1 mt-1">
+                                    <span th:if="${totalValue != null and totalValue > 0}"
+                                          th:text="${#numbers.formatDecimal(totalValue, 0, 'COMMA', 0, 'POINT') + ' đ'}">
+                                        0 đ
+                                    </span>
+                                    <span th:unless="${totalValue != null and totalValue > 0}">0 đ</span>
+                                </div>
+                                <small class="text-muted">VNĐ</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ===== TRUY CẬP NHANH ===== -->
+            <div class="row g-3">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white border-bottom py-3">
+                            <h6 class="mb-0 fw-semibold">
+                                <i class="bi bi-lightning-charge me-2 text-warning"></i>
+                                Truy cập nhanh
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-2">
+                                <div class="col-6 col-md-3">
+                                    <a th:href="@{/antiques/create}"
+                                       class="btn btn-outline-primary w-100 py-3 d-flex flex-column align-items-center gap-1">
+                                        <i class="bi bi-plus-circle fs-4"></i>
+                                        <small>Thêm đồ cổ</small>
+                                    </a>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <a th:href="@{/import-receipts/new}"
+                                       class="btn btn-outline-success w-100 py-3 d-flex flex-column align-items-center gap-1">
+                                        <i class="bi bi-file-earmark-plus fs-4"></i>
+                                        <small>Tạo phiếu nhập</small>
+                                    </a>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <a th:href="@{/export-receipts/new}"
+                                       class="btn btn-outline-danger w-100 py-3 d-flex flex-column align-items-center gap-1">
+                                        <i class="bi bi-file-earmark-minus fs-4"></i>
+                                        <small>Tạo phiếu xuất</small>
+                                    </a>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <a th:href="@{/reports}"
+                                       class="btn btn-outline-secondary w-100 py-3 d-flex flex-column align-items-center gap-1">
+                                        <i class="bi bi-bar-chart-line fs-4"></i>
+                                        <small>Xem báo cáo</small>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Footer -->
+        <div th:replace="~{fragments/footer :: footer}"></div>
+    </div>
+
+</div>
+
+<!-- Scripts -->
+<div th:replace="~{fragments/footer :: scripts}"></div>
+<script>
+    // Hiển thị ngày giờ hiện tại
+    function updateDateTime() {
+        const now = new Date();
+        const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
+        const dateEl = document.getElementById('currentDate');
+        const timeEl = document.getElementById('currentTimeDisplay');
+        if (dateEl) dateEl.textContent = now.toLocaleDateString('vi-VN', dateOptions);
+        if (timeEl) timeEl.textContent = now.toLocaleTimeString('vi-VN', timeOptions);
+    }
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+</script>
+</body>
+</html>

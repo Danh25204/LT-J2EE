@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<!-- Trang danh sách người dùng - chỉ Admin truy cập được -->
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="vi">
+
+<head th:replace="~{fragments/header :: head('Quản lý người dùng')}"></head>
+
+<body>
+<div class="d-flex min-vh-100">
+
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+    <div class="flex-grow-1 d-flex flex-column" style="min-width:0;">
+        <div th:replace="~{fragments/header :: topnav}"></div>
+
+        <main class="flex-grow-1 p-4" style="background:#f8f9fa;">
+
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-3">
+                <ol class="breadcrumb small">
+                    <li class="breadcrumb-item">
+                        <a th:href="@{/dashboard}" class="text-decoration-none">
+                            <i class="bi bi-house me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active">Quản lý người dùng</li>
+                </ol>
+            </nav>
+
+            <!-- Page header -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0">
+                    <i class="bi bi-people me-2 text-primary"></i>Quản lý người dùng
+                </h5>
+                <a th:href="@{/admin/users/create}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-lg me-1"></i>Thêm người dùng
+                </a>
+            </div>
+
+            <!-- Flash messages (successMessage / errorMessage từ RedirectAttributes) -->
+            <div th:if="${successMessage}"
+                 class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2 py-2">
+                <i class="bi bi-check-circle-fill flex-shrink-0"></i>
+                <span th:text="${successMessage}"></span>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+            </div>
+            <div th:if="${errorMessage}"
+                 class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2 py-2">
+                <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+                <span th:text="${errorMessage}"></span>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+            </div>
+
+            <!-- Bảng danh sách -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom py-2 d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold small">
+                        Tổng: <span class="badge bg-primary" th:text="${#lists.size(users)}">0</span> người dùng
+                    </span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 datatable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th class="text-center" style="width:50px;">#</th>
+                                    <th>Tên đăng nhập</th>
+                                    <th>Họ và tên</th>
+                                    <th>Email</th>
+                                    <th>Điện thoại</th>
+                                    <th class="text-center">Vai trò</th>
+                                    <th class="text-center">Trạng thái</th>
+                                    <th class="text-center">Ngày tạo</th>
+                                    <th class="text-center" style="width:140px;">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+
+                                <!-- Trường hợp không có dữ liệu -->
+                                <tr th:if="${#lists.isEmpty(users)}">
+                                    <td colspan="9" class="text-center text-muted py-5">
+                                        <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                        Chưa có người dùng nào trong hệ thống
+                                    </td>
+                                </tr>
+
+                                <!-- Lặp qua danh sách users -->
+                                <tr th:each="user, iterStat : ${users}"
+                                    th:class="${!user.active} ? 'table-secondary opacity-75' : ''">
+
+                                    <!-- STT -->
+                                    <td class="text-center text-muted">
+                                        <span th:text="${iterStat.count}"></span>
+                                    </td>
+
+                                    <!-- Tên đăng nhập -->
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                                                 style="width:32px;height:32px;font-size:0.8rem;flex-shrink:0;">
+                                                <!-- Lấy chữ cái đầu của username -->
+                                                <span th:text="${#strings.toUpperCase(#strings.substring(user.username, 0, 1))}">A</span>
+                                            </div>
+                                            <strong th:text="${user.username}"></strong>
+                                        </div>
+                                    </td>
+
+                                    <!-- Họ tên -->
+                                    <td th:text="${user.fullName ?: '—'}"></td>
+
+                                    <!-- Email -->
+                                    <td>
+                                        <small th:text="${user.email ?: '—'}"></small>
+                                    </td>
+
+                                    <!-- Điện thoại -->
+                                    <td>
+                                        <small th:text="${user.phone ?: '—'}"></small>
+                                    </td>
+
+                                    <!-- Vai trò (hiển thị badge theo từng role) -->
+                                    <td class="text-center">
+                                        <span th:each="role : ${user.roles}">
+                                            <span th:if="${role.name == 'ROLE_ADMIN'}"
+                                                  class="badge bg-danger">
+                                                <i class="bi bi-shield-check me-1"></i>Admin
+                                            </span>
+                                            <span th:if="${role.name == 'ROLE_NHAN_VIEN'}"
+                                                  class="badge bg-primary">
+                                                <i class="bi bi-person-badge me-1"></i>Nhân viên
+                                            </span>
+                                        </span>
+                                    </td>
+
+                                    <!-- Trạng thái -->
+                                    <td class="text-center">
+                                        <span th:if="${user.active}"
+                                              class="badge bg-success">
+                                            <i class="bi bi-check-circle me-1"></i>Hoạt động
+                                        </span>
+                                        <span th:unless="${user.active}"
+                                              class="badge bg-secondary">
+                                            <i class="bi bi-x-circle me-1"></i>Vô hiệu
+                                        </span>
+                                    </td>
+
+                                    <!-- Ngày tạo -->
+                                    <td class="text-center">
+                                        <small class="text-muted"
+                                               th:text="${user.createdAt != null}
+                                                   ? ${#temporals.format(user.createdAt, 'dd/MM/yyyy')}
+                                                   : '—'">
+                                        </small>
+                                    </td>
+
+                                    <!-- Nút thao tác -->
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm">
+                                            <!-- Sửa -->
+                                            <a th:href="@{/admin/users/{id}/edit(id=${user.id})}"
+                                               class="btn btn-outline-primary"
+                                               title="Chỉnh sửa">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+
+                                            <!-- Bật/tắt trạng thái -->
+                                            <form th:action="@{/admin/users/{id}/toggle-active(id=${user.id})}"
+                                                  method="post" class="d-inline">
+                                                <button type="submit"
+                                                        th:class="${user.active}
+                                                            ? 'btn btn-outline-warning'
+                                                            : 'btn btn-outline-success'"
+                                                        th:title="${user.active}
+                                                            ? 'Vô hiệu hóa tài khoản'
+                                                            : 'Kích hoạt tài khoản'">
+                                                    <i th:class="${user.active}
+                                                        ? 'bi bi-toggle-on'
+                                                        : 'bi bi-toggle-off'"></i>
+                                                </button>
+                                            </form>
+
+                                            <!-- Xóa mềm (chỉ hiện với tài khoản chưa bị vô hiệu hóa) -->
+                                            <form th:action="@{/admin/users/{id}/delete(id=${user.id})}"
+                                                  method="post" class="d-inline"
+                                                  th:if="${user.active}">
+                                                <button type="submit"
+                                                        class="btn btn-outline-danger"
+                                                        title="Vô hiệu hóa"
+                                                        onclick="return confirm('Vô hiệu hóa tài khoản: ' + /*[[${user.username}]]*/ '' + '?')">
+                                                    <i class="bi bi-person-x"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <div th:replace="~{fragments/footer :: footer}"></div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: scripts}"></div>
+</body>
+</html>
