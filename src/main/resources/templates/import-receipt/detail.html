@@ -85,6 +85,7 @@
                                             <th class="text-center">Số lượng</th>
                                             <th class="text-end">Đơn giá</th>
                                             <th class="text-end">Thành tiền</th>
+                                            <th>Ghi chú</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -106,13 +107,15 @@
                                                 th:text="${#numbers.formatDecimal(detail.donGia, 0, 'COMMA', 0, 'POINT') + ' ₫'}"></td>
                                             <td class="text-end text-success fw-bold"
                                                 th:text="${#numbers.formatDecimal(detail.thanhTien, 0, 'COMMA', 0, 'POINT') + ' ₫'}"></td>
+                                            <td th:text="${detail.ghiChu ?: '—'}"></td>
                                         </tr>
                                     </tbody>
                                     <tfoot class="table-light">
                                         <tr>
-                                            <td colspan="4" class="text-end fw-bold">Tổng giá trị:</td>
+                                            <td colspan="5" class="text-end fw-bold">Tổng giá trị:</td>
                                             <td class="text-end text-success fw-bold fs-5"
                                                 th:text="${#numbers.formatDecimal(receipt.tongGiaTri, 0, 'COMMA', 0, 'POINT') + ' ₫'}"></td>
+                                            <td></td>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -125,15 +128,22 @@
                         <a th:href="@{/import-receipts}" class="btn btn-secondary">
                             <i class="bi bi-arrow-left"></i> Quay lại danh sách
                         </a>
-                        <form th:if="${receipt.trangThai.name() == 'NHAP_KHO'}"
-                              th:action="@{/import-receipts/{id}/cancel(id=${receipt.id})}"
-                              method="post"
-                              onsubmit="return confirm('Bạn có chắc muốn hủy phiếu này? Thao tác này không thể hoàn tác!');">
-                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                            <button type="submit" class="btn btn-warning">
-                                <i class="bi bi-x-circle"></i> Hủy phiếu
-                            </button>
-                        </form>
+                        <div class="d-flex gap-2">
+                            <a th:if="${receipt.trangThai.name() == 'NHAP_KHO'}"
+                               th:href="@{/import-receipts/{id}/edit(id=${receipt.id})}"
+                               class="btn btn-primary">
+                                <i class="bi bi-pencil"></i> Sửa thông tin
+                            </a>
+                            <form th:if="${receipt.trangThai.name() == 'NHAP_KHO'}"
+                                  th:action="@{/import-receipts/{id}/cancel(id=${receipt.id})}"
+                                  method="post"
+                                  onsubmit="return confirm('Hủy phiếu sẽ trừ lại tồn kho. Nếu đồ cổ đã được xuất kho thì thao tác sẽ thất bại. Bạn có chắc?');">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="bi bi-x-circle"></i> Hủy phiếu
+                                </button>
+                            </form>
+                        </div>
                     </div>
 
                 </div>

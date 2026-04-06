@@ -3,6 +3,8 @@ package com.example.antique.repository;
 import com.example.antique.entity.ExportReceipt;
 import com.example.antique.entity.LyDoXuat;
 import com.example.antique.entity.TrangThaiPhieuXuat;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -45,5 +47,26 @@ public interface ExportReceiptRepository extends JpaRepository<ExportReceipt, Lo
     @Query("SELECT COUNT(r) FROM ExportReceipt r " +
            "WHERE MONTH(r.createdAt) = :thang AND YEAR(r.createdAt) = :nam")
     long demPhieuXuatTrongThang(@Param("thang") int thang, @Param("nam") int nam);
+
+    @Query("SELECT COUNT(r) FROM ExportReceipt r WHERE r.lyDo = 'CHO_MUON' AND r.trangThai = 'XUAT_KHO'")
+    long countItemsOnLoan();
+
+    /**
+     * Lấy mã phiếu xuất lớn nhất có prefix cho trước (tránh race condition).
+     */
+    @Query("SELECT MAX(r.maPhieuXuat) FROM ExportReceipt r WHERE r.maPhieuXuat LIKE CONCAT(:prefix, '%')")
+    Optional<String> findMaxMaPhieuByPrefix(@Param("prefix") String prefix);
+
+    /**
+     * Truy vấn có phân trang và lọc theo ngày xuất.
+     */
+    @Query("SELECT r FROM ExportReceipt r WHERE " +
+           "(:tuNgay IS NULL OR r.ngayXuat >= :tuNgay) AND " +
+           "(:denNgay IS NULL OR r.ngayXuat <= :denNgay) " +
+           "ORDER BY r.createdAt DESC")
+    Page<ExportReceipt> findByDateFilter(
+            @Param("tuNgay") LocalDate tuNgay,
+            @Param("denNgay") LocalDate denNgay,
+            Pageable pageable);
 
 }

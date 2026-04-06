@@ -79,5 +79,7 @@ src/main/resources/
 ```
 
 ## Tác giả
+Nguyễn Thành Danh
+Huỳnh Nguyễn Ánh Tuyết
 
 Đồ án môn Lập trình với J2EE

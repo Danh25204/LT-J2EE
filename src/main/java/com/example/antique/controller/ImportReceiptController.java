@@ -6,6 +6,8 @@ import com.example.antique.entity.Antique;
 import com.example.antique.entity.User;
 import com.example.antique.service.ImportReceiptService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
@@ -28,19 +30,24 @@ public class ImportReceiptController {
     private final ImportReceiptService importReceiptService;
 
     /**
-     * Danh sách phiếu nhập.
+     * Danh sách phiếu nhập có lọc theo ngày và phân trang.
      * GET /import-receipts
      */
     @GetMapping
-    public String list(Model model) {
-        List<ImportReceiptDTO> receipts = importReceiptService.findAll();
-        model.addAttribute("receipts", receipts);
-        model.addAttribute("countNhapKho", receipts.stream()
-                .filter(r -> r.getTrangThai() != null && r.getTrangThai().name().equals("NHAP_KHO"))
-                .count());
-        model.addAttribute("countHuy", receipts.stream()
-                .filter(r -> r.getTrangThai() != null && r.getTrangThai().name().equals("HUY"))
-                .count());
+    public String list(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tuNgay,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate denNgay,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Model model) {
+        Page<ImportReceiptDTO> pagedResult = importReceiptService.findAllPaged(tuNgay, denNgay, page, size);
+        model.addAttribute("receipts", pagedResult.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", pagedResult.getTotalPages());
+        model.addAttribute("totalElements", pagedResult.getTotalElements());
+        model.addAttribute("tuNgay", tuNgay);
+        model.addAttribute("denNgay", denNgay);
+        model.addAttribute("pageSize", size);
         return "import-receipt/list";
     }
 
@@ -124,6 +131,34 @@ public class ImportReceiptController {
         try {
             importReceiptService.cancel(id);
             redirectAttributes.addFlashAttribute("success", "Đã hủy phiếu nhập!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+        }
+        return "redirect:/import-receipts/" + id;
+    }
+
+    /**
+     * Form sửa thông tin phiếu nhập (header-only).
+     * GET /import-receipts/{id}/edit
+     */
+    @GetMapping("/{id}/edit")
+    public String editForm(@PathVariable Long id, Model model) {
+        ImportReceiptDTO receipt = importReceiptService.findById(id);
+        model.addAttribute("receipt", receipt);
+        return "import-receipt/edit";
+    }
+
+    /**
+     * Lưu chỉnh sửa thông tin phiếu nhập.
+     * POST /import-receipts/{id}/edit
+     */
+    @PostMapping("/{id}/edit")
+    public String update(@PathVariable Long id,
+                         @ModelAttribute ImportReceiptDTO dto,
+                         RedirectAttributes redirectAttributes) {
+        try {
+            importReceiptService.updateHeader(id, dto);
+            redirectAttributes.addFlashAttribute("success", "Cập nhật phiếu nhập thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
         }

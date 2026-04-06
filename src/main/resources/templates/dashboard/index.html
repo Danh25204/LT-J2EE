@@ -115,12 +115,45 @@
                                     </span>
                                     <span th:unless="${totalValue != null and totalValue > 0}">0 đ</span>
                                 </div>
-                                <small class="text-muted">VNĐ</small>
                             </div>
                         </div>
                     </div>
                 </div>
 
+            </div>
+
+            <!-- ===== THẾ ĐỒ CỔ ĐANG CHO MƯỢN ===== -->
+            <div th:if="${itemsOnLoan != null and itemsOnLoan > 0}"
+                 class="alert alert-info d-flex align-items-center justify-content-between mb-4 shadow-sm"
+                 role="alert">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-arrow-return-left fs-5"></i>
+                    <div>
+                        <strong>Cho mượn!</strong>
+                        Hiện có <strong th:text="${itemsOnLoan}">0</strong> phiếu cho mượn chưa được trả.
+                        <small class="text-muted d-block">Đồ cổ đang ở ngoài kho, chưa ghi nhận trả lại.</small>
+                    </div>
+                </div>
+                <a th:href="@{/export-receipts}" class="btn btn-info btn-sm text-nowrap text-white">
+                    <i class="bi bi-eye me-1"></i>Xem phiếu
+                </a>
+            </div>
+
+            <!-- ===== CẢNH BÁO KIỂM TRA ĐỒ CỔ ===== -->
+            <div th:if="${pendingInspections != null and pendingInspections > 0}"
+                 class="alert alert-warning d-flex align-items-center justify-content-between mb-4 shadow-sm"
+                 role="alert">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                    <div>
+                        <strong>Cảnh báo!</strong>
+                        Có <strong th:text="${pendingInspections}">0</strong> đồ cổ đang chờ kiểm tra tình trạng.
+                        <small class="text-muted d-block">Đồ cổ tồn kho lâu ngày hoặc vừa được trả lại sau khi cho mượn.</small>
+                    </div>
+                </div>
+                <a th:href="@{/antique-inspections}" class="btn btn-warning btn-sm text-nowrap">
+                    <i class="bi bi-clipboard-check me-1"></i>Xem ngay
+                </a>
             </div>
 
             <!-- ===== TRUY CẬP NHANH ===== -->

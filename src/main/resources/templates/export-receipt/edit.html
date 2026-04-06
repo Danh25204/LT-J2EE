@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Sửa Phiếu Xuất')}"></head>
+<body class="sb-nav-fixed">
+
+    <div th:replace="~{fragments/header :: topnav}"></div>
+
+    <div id="layoutSidenav">
+        <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+        <div id="layoutSidenav_content">
+            <main>
+                <div class="container-fluid px-4">
+                    <h1 class="mt-4">
+                        <i class="bi bi-pencil-square me-2 text-danger"></i>Sửa Thông Tin Phiếu Xuất
+                    </h1>
+                    <ol class="breadcrumb mb-4">
+                        <li class="breadcrumb-item"><a th:href="@{/dashboard}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/export-receipts}">Phiếu Xuất</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/export-receipts/{id}(id=${receipt.id})}">Chi tiết</a></li>
+                        <li class="breadcrumb-item active">Sửa thông tin</li>
+                    </ol>
+
+                    <!-- Alert messages -->
+                    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="bi bi-check-circle me-2"></i>
+                        <span th:text="${successMessage}"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <span th:text="${errorMessage}"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header d-flex align-items-center">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Thông tin phiếu xuất</strong>
+                        </div>
+                        <div class="card-body">
+                            <!-- Read-only info -->
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Mã phiếu</label>
+                                    <input type="text" class="form-control" th:value="${receipt.maPhieuXuat}" readonly>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Trạng thái</label>
+                                    <input type="text" class="form-control"
+                                           th:value="${receipt.trangThai != null and receipt.trangThai.name() == 'XUAT_KHO' ? 'Xuất kho' : 'Đã hủy'}"
+
+                                           readonly>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Tổng giá trị</label>
+                                    <input type="text" class="form-control"
+                                           th:value="${#numbers.formatDecimal(receipt.tongGiaTri, 0, 'COMMA', 0, 'POINT') + ' đ'}"
+                                           readonly>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-info py-2">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Chỉ có thể chỉnh sửa thông tin phiếu. Chi tiết đồ cổ không thể thay đổi để đảm bảo tính toàn vẹn của tồn kho.
+                            </div>
+
+                            <!-- Edit form -->
+                            <form th:action="@{/export-receipts/{id}/edit(id=${receipt.id})}" method="post">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label for="ngayXuat" class="form-label fw-bold">
+                                            Ngày xuất <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="date" id="ngayXuat" name="ngayXuat"
+                                               class="form-control"
+                                               th:value="${receipt.ngayXuat}"
+                                               required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="lyDo" class="form-label fw-bold">Lý do xuất</label>
+                                        <select id="lyDo" name="lyDo" class="form-select">
+                                            <option value="">-- Chọn lý do --</option>
+                                            <option th:each="ld : ${lyDoList}"
+                                                    th:value="${ld.name()}"
+                                                    th:text="${ld.moTa}"
+                                                    th:selected="${receipt.lyDo != null and receipt.lyDo.name() == ld.name()}">
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="nguoiNhan" class="form-label fw-bold">Người nhận</label>
+                                        <input type="text" id="nguoiNhan" name="nguoiNhan"
+                                               class="form-control"
+                                               th:value="${receipt.nguoiNhan}"
+                                               placeholder="Tên người nhận..."
+                                               maxlength="200">
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="ghiChu" class="form-label fw-bold">Ghi chú</label>
+                                        <textarea id="ghiChu" name="ghiChu"
+                                                  class="form-control" rows="4"
+                                                  placeholder="Nhập ghi chú..."
+                                                  maxlength="1000"
+                                                  th:text="${receipt.ghiChu}"></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-between mt-4">
+                                    <a th:href="@{/export-receipts/{id}(id=${receipt.id})}" class="btn btn-secondary">
+                                        <i class="bi bi-arrow-left"></i> Quay lại
+                                    </a>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="bi bi-save"></i> Lưu thay đổi
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <footer th:replace="~{fragments/footer :: footer}"></footer>
+        </div>
+    </div>
+
+    <th:block th:replace="~{fragments/footer :: scripts}"></th:block>
+</body>
+</html>

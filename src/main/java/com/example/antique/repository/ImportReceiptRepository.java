@@ -2,6 +2,8 @@ package com.example.antique.repository;
 
 import com.example.antique.entity.ImportReceipt;
 import com.example.antique.entity.TrangThaiPhieuNhap;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -54,5 +56,23 @@ public interface ImportReceiptRepository extends JpaRepository<ImportReceipt, Lo
     @Query("SELECT COUNT(r) FROM ImportReceipt r " +
            "WHERE MONTH(r.createdAt) = :thang AND YEAR(r.createdAt) = :nam")
     long demPhieuNhapTrongThang(@Param("thang") int thang, @Param("nam") int nam);
+
+    /**
+     * Lấy mã phiếu nhập lớn nhất có prefix cho trước (tránh race condition).
+     */
+    @Query("SELECT MAX(r.maPhieuNhap) FROM ImportReceipt r WHERE r.maPhieuNhap LIKE CONCAT(:prefix, '%')")
+    Optional<String> findMaxMaPhieuByPrefix(@Param("prefix") String prefix);
+
+    /**
+     * Truy vấn có phân trang và lọc theo ngày nhập.
+     */
+    @Query("SELECT r FROM ImportReceipt r WHERE " +
+           "(:tuNgay IS NULL OR r.ngayNhap >= :tuNgay) AND " +
+           "(:denNgay IS NULL OR r.ngayNhap <= :denNgay) " +
+           "ORDER BY r.createdAt DESC")
+    Page<ImportReceipt> findByDateFilter(
+            @Param("tuNgay") LocalDate tuNgay,
+            @Param("denNgay") LocalDate denNgay,
+            Pageable pageable);
 
 }

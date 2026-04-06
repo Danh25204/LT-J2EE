@@ -36,13 +36,18 @@ public class ReportService {
     @Transactional(readOnly = true)
     public long countMonthlyImports() {
         LocalDate now = LocalDate.now();
-        return importReceiptRepository.demPhieuNhapTrongThang(now.getMonthValue(), now.getYear());
+        return importReceiptRepository.demPhieuNhapTheoThangNam(now.getMonthValue(), now.getYear());
     }
 
     @Transactional(readOnly = true)
     public long countMonthlyExports() {
         LocalDate now = LocalDate.now();
-        return exportReceiptRepository.demPhieuXuatTrongThang(now.getMonthValue(), now.getYear());
+        return exportReceiptRepository.demPhieuXuatTheoThangNam(now.getMonthValue(), now.getYear());
+    }
+
+    @Transactional(readOnly = true)
+    public long countItemsOnLoan() {
+        return exportReceiptRepository.countItemsOnLoan();
     }
 
     @Transactional(readOnly = true)

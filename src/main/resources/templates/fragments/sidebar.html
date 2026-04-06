@@ -102,6 +102,29 @@
             </a>
         </li>
 
+        <!-- Lịch sử hoạt động -->
+        <li class="nav-item">
+            <a th:href="@{/warehouse-activities}"
+               th:classappend="${currentUri.startsWith('/warehouse-activities')} ? ' active' : ''"
+               class="nav-link text-white rounded px-3 py-2">
+                <i class="bi bi-clock-history me-2"></i>Lịch sử hoạt động
+            </a>
+        </li>
+
+        <!-- Kiểm tra đồ cổ -->
+        <li class="nav-item">
+            <a th:href="@{/antique-inspections}"
+               th:classappend="${currentUri.startsWith('/antique-inspections')} ? ' active' : ''"
+               class="nav-link text-white rounded px-3 py-2 d-flex align-items-center justify-content-between">
+                <span>
+                    <i class="bi bi-clipboard-check me-2"></i>Kiểm tra đồ cổ
+                </span>
+                <span th:if="${pendingInspectionsBadge != null and pendingInspectionsBadge > 0}"
+                      class="badge bg-danger rounded-pill"
+                      th:text="${pendingInspectionsBadge}">0</span>
+            </a>
+        </li>
+
         <!-- ===== CHỈ ADMIN MỚI THẤY PHẦN NÀY ===== -->
         <li class="nav-item mt-2" sec:authorize="hasRole('ADMIN')">
             <small class="text-secondary px-3 text-uppercase fw-bold"

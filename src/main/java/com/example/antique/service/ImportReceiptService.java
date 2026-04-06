@@ -8,6 +8,8 @@ import com.example.antique.repository.ImportReceiptRepository;
 import com.example.antique.repository.InventoryRepository;
 import com.example.antique.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +42,7 @@ public class ImportReceiptService {
     private final AntiqueRepository antiqueRepository;
     private final InventoryRepository inventoryRepository;
     private final UserRepository userRepository;
+    private final WarehouseActivityService warehouseActivityService;
 
     /**
      * Lấy tất cả phiếu nhập, mới nhất trước.
@@ -74,6 +77,12 @@ public class ImportReceiptService {
         for (ImportReceiptDetailDTO detailDTO : dto.getDetails()) {
             if (!antiqueIds.add(detailDTO.getAntiqueId())) {
                 throw new RuntimeException("Trùng đồ cổ ID: " + detailDTO.getAntiqueId() + " trong phiếu nhập!");
+            }
+            if (detailDTO.getSoLuong() == null || detailDTO.getSoLuong() <= 0) {
+                throw new RuntimeException("Số lượng phải lớn hơn 0!");
+            }
+            if (detailDTO.getDonGia() == null || detailDTO.getDonGia().compareTo(java.math.BigDecimal.ZERO) < 0) {
+                throw new RuntimeException("Đơn giá không hợp lệ (phải >= 0)!");
             }
         }
 
@@ -126,7 +135,10 @@ public class ImportReceiptService {
         
         // 5. Lưu phiếu (cascade sẽ tự lưu details)
         ImportReceipt saved = importReceiptRepository.save(receipt);
-        
+
+        // 6. Ghi lịch sử hoạt động
+        warehouseActivityService.logNhapKho(saved);
+
         return convertToDTO(saved);
     }
 
@@ -147,12 +159,22 @@ public class ImportReceiptService {
             Inventory inventory = inventoryRepository.findByAntiqueId(detail.getAntique().getId())
                     .orElseThrow(() -> new RuntimeException(
                             "Không tìm thấy tồn kho cho: " + detail.getAntique().getTenDocCo()));
-            inventory.setSoLuongTon(inventory.getSoLuongTon() - detail.getSoLuong());
+            int soLuongSauHuy = inventory.getSoLuongTon() - detail.getSoLuong();
+            if (soLuongSauHuy < 0) {
+                throw new RuntimeException(
+                        "Không thể hủy phiếu nhập vì đồ cổ '" + detail.getAntique().getTenDocCo()
+                        + "' đã được xuất kho. Tồn hiện tại: " + inventory.getSoLuongTon()
+                        + ", cần hoàn trả: " + detail.getSoLuong());
+            }
+            inventory.setSoLuongTon(soLuongSauHuy);
             inventoryRepository.save(inventory);
         }
         
         receipt.setTrangThai(TrangThaiPhieuNhap.HUY);
         importReceiptRepository.save(receipt);
+
+        // Ghi lịch sử hoạt động
+        warehouseActivityService.logHuyNhap(receipt);
     }
 
     /**
@@ -163,18 +185,17 @@ public class ImportReceiptService {
         LocalDate date = ngayNhap != null ? ngayNhap : LocalDate.now();
         String yearMonth = date.format(DateTimeFormatter.ofPattern("yyyyMM"));
         String prefix = "PN-" + yearMonth + "-";
-        
-        // Tìm số thứ tự lớn nhất đã dùng (tránh trùng khi có phiếu bị hủy)
-        Optional<Integer> maxSeq = importReceiptRepository.findAll()
-                .stream()
-                .filter(r -> r.getMaPhieuNhap().startsWith(prefix))
-                .map(r -> {
-                    String seq = r.getMaPhieuNhap().substring(prefix.length());
-                    try { return Integer.parseInt(seq); } catch (NumberFormatException e) { return 0; }
+
+        // Dùng MAX query trực tiếp trên DB (an toàn hơn findAll + stream)
+        int nextSeq = importReceiptRepository.findMaxMaPhieuByPrefix(prefix)
+                .map(maxMa -> {
+                    try {
+                        return Integer.parseInt(maxMa.substring(prefix.length())) + 1;
+                    } catch (NumberFormatException e) {
+                        return 1;
+                    }
                 })
-                .max(Integer::compareTo);
-        
-        int nextSeq = maxSeq.orElse(0) + 1;
+                .orElse(1);
         return prefix + String.format("%03d", nextSeq);
     }
 
@@ -235,6 +256,32 @@ public class ImportReceiptService {
     public User findUserByUsername(String username) {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng: " + username));
+    }
+
+    /**
+     * Lấy danh sách phiếu nhập có phân trang và lọc theo ngày.
+     */
+    @Transactional(readOnly = true)
+    public Page<ImportReceiptDTO> findAllPaged(LocalDate tuNgay, LocalDate denNgay, int page, int size) {
+        return importReceiptRepository.findByDateFilter(tuNgay, denNgay, PageRequest.of(page, size))
+                .map(this::convertToDTO);
+    }
+
+    /**
+     * Sửa thông tin phếu nhập (header-only: ngày, nguồn gốc, ghi chú).
+     * Không cho phép sửa dòng chi tiết vì sẽ ảnh hưởng tồn kho.
+     */
+    @Transactional
+    public ImportReceiptDTO updateHeader(Long id, ImportReceiptDTO dto) {
+        ImportReceipt receipt = importReceiptRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu nhập ID: " + id));
+        if (receipt.getTrangThai() == TrangThaiPhieuNhap.HUY) {
+            throw new RuntimeException("Không thể sửa phiếu đã hủy!");
+        }
+        receipt.setNgayNhap(dto.getNgayNhap() != null ? dto.getNgayNhap() : receipt.getNgayNhap());
+        receipt.setNguonGoc(dto.getNguonGoc());
+        receipt.setGhiChu(dto.getGhiChu());
+        return convertToDTO(importReceiptRepository.save(receipt));
     }
 
 }

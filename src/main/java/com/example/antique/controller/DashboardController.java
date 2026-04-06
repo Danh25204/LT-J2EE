@@ -1,5 +1,6 @@
 package com.example.antique.controller;
 
+import com.example.antique.service.AntiqueInspectionService;
 import com.example.antique.service.ReportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class DashboardController {
 
     private final ReportService reportService;
+    private final AntiqueInspectionService antiqueInspectionService;
 
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
@@ -21,6 +23,8 @@ public class DashboardController {
         model.addAttribute("monthlyImports", reportService.countMonthlyImports());
         model.addAttribute("monthlyExports", reportService.countMonthlyExports());
         model.addAttribute("totalValue", reportService.getTongGiaTriKho());
+        model.addAttribute("pendingInspections", antiqueInspectionService.countPending());
+        model.addAttribute("itemsOnLoan", reportService.countItemsOnLoan());
         return "dashboard/index";
     }
 

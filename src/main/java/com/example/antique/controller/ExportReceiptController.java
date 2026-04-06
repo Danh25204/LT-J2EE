@@ -6,6 +6,8 @@ import com.example.antique.entity.LyDoXuat;
 import com.example.antique.entity.User;
 import com.example.antique.service.ExportReceiptService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
@@ -28,19 +30,24 @@ public class ExportReceiptController {
     private final ExportReceiptService exportReceiptService;
 
     /**
-     * Danh sách phiếu xuất.
+     * Danh sách phiếu xuất có lọc theo ngày và phân trang.
      * GET /export-receipts
      */
     @GetMapping
-    public String list(Model model) {
-        List<ExportReceiptDTO> receipts = exportReceiptService.findAll();
-        model.addAttribute("receipts", receipts);
-        model.addAttribute("countXuatKho", receipts.stream()
-                .filter(r -> r.getTrangThai() != null && r.getTrangThai().name().equals("XUAT_KHO"))
-                .count());
-        model.addAttribute("countHuy", receipts.stream()
-                .filter(r -> r.getTrangThai() != null && r.getTrangThai().name().equals("HUY"))
-                .count());
+    public String list(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tuNgay,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate denNgay,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Model model) {
+        Page<ExportReceiptDTO> pagedResult = exportReceiptService.findAllPaged(tuNgay, denNgay, page, size);
+        model.addAttribute("receipts", pagedResult.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", pagedResult.getTotalPages());
+        model.addAttribute("totalElements", pagedResult.getTotalElements());
+        model.addAttribute("tuNgay", tuNgay);
+        model.addAttribute("denNgay", denNgay);
+        model.addAttribute("pageSize", size);
         return "export-receipt/list";
     }
 
@@ -114,8 +121,43 @@ public class ExportReceiptController {
     @PostMapping("/{id}/cancel")
     public String cancel(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
+            ExportReceiptDTO receipt = exportReceiptService.findById(id);
+            boolean laChoMuon = receipt.getLyDo() == LyDoXuat.CHO_MUON;
             exportReceiptService.cancel(id);
-            redirectAttributes.addFlashAttribute("success", "Đã hủy phiếu xuất và hoàn lại tồn kho!");
+            if (laChoMuon) {
+                redirectAttributes.addFlashAttribute("success", "Đã ghi nhận trả hàng và hoàn lại tồn kho!");
+            } else {
+                redirectAttributes.addFlashAttribute("success", "Đã hủy phiếu xuất và hoàn lại tồn kho!");
+            }
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+        }
+        return "redirect:/export-receipts/" + id;
+    }
+
+    /**
+     * Form sửa thông tin phiếu xuất (header-only).
+     * GET /export-receipts/{id}/edit
+     */
+    @GetMapping("/{id}/edit")
+    public String editForm(@PathVariable Long id, Model model) {
+        ExportReceiptDTO receipt = exportReceiptService.findById(id);
+        model.addAttribute("receipt", receipt);
+        model.addAttribute("lyDoList", LyDoXuat.values());
+        return "export-receipt/edit";
+    }
+
+    /**
+     * Lưu chỉnh sửa thông tin phiếu xuất.
+     * POST /export-receipts/{id}/edit
+     */
+    @PostMapping("/{id}/edit")
+    public String update(@PathVariable Long id,
+                         @ModelAttribute ExportReceiptDTO dto,
+                         RedirectAttributes redirectAttributes) {
+        try {
+            exportReceiptService.updateHeader(id, dto);
+            redirectAttributes.addFlashAttribute("success", "Cập nhật phiếu xuất thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
         }

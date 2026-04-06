@@ -198,12 +198,14 @@ public class AntiqueService {
                     "Không tìm thấy đồ cổ ID: " + id
                 ));
 
-        // TODO: Phase 4 - Kiểm tra đồ cổ có trong phiếu nhập/xuất nào không
-        // if (hasImportOrExportReceipts(id)) {
-        //     throw new IllegalStateException(
-        //         "Không thể xóa đồ cổ đã có lịch sử nhập/xuất kho!"
-        //     );
-        // }
+        // Kiểm tra tồn kho — không cho xóa nếu còn hàng trong kho
+        if (antique.getInventory() != null && antique.getInventory().getSoLuongTon() > 0) {
+            throw new IllegalStateException(
+                "Không thể xóa đồ cổ '" + antique.getTenDocCo()
+                + "' vì còn " + antique.getInventory().getSoLuongTon()
+                + " cái trong kho. Vui lòng xuất kho hết trước khi xóa!"
+            );
+        }
 
         // Xóa file ảnh (nếu có)
         if (StringUtils.hasText(antique.getAnhChinh())) {

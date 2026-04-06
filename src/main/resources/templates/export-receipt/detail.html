@@ -37,7 +37,11 @@
                                 <span th:if="${receipt.trangThai.name() == 'XUAT_KHO'}" class="badge bg-light text-danger fs-6">
                                     <i class="bi bi-box-arrow-up"></i> Đã xuất kho
                                 </span>
-                                <span th:if="${receipt.trangThai.name() == 'HUY'}" class="badge bg-secondary fs-6">
+                                <!-- Phiếu CHO_MUON bị hủy = đã được trả lại -->
+                                <span th:if="${receipt.trangThai.name() == 'HUY' and receipt.lyDo != null and receipt.lyDo.name() == 'CHO_MUON'}" class="badge bg-success fs-6">
+                                    <i class="bi bi-arrow-return-left"></i> Đã nhận lại hàng
+                                </span>
+                                <span th:if="${receipt.trangThai.name() == 'HUY' and (receipt.lyDo == null or receipt.lyDo.name() != 'CHO_MUON')}" class="badge bg-secondary fs-6">
                                     <i class="bi bi-x-circle"></i> Đã hủy
                                 </span>
                             </div>
@@ -138,15 +142,34 @@
                         <a th:href="@{/export-receipts}" class="btn btn-secondary">
                             <i class="bi bi-arrow-left"></i> Quay lại danh sách
                         </a>
-                        <form th:if="${receipt.trangThai.name() == 'XUAT_KHO'}"
-                              th:action="@{/export-receipts/{id}/cancel(id=${receipt.id})}"
-                              method="post"
-                              onsubmit="return confirm('Hủy phiếu này sẽ hoàn lại tồn kho cho tất cả đồ cổ. Bạn có chắc?');">
-                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                            <button type="submit" class="btn btn-warning">
-                                <i class="bi bi-x-circle"></i> Hủy phiếu (hoàn lại tồn kho)
-                            </button>
-                        </form>
+                        <div class="d-flex gap-2">
+                            <a th:if="${receipt.trangThai.name() == 'XUAT_KHO'}"
+                               th:href="@{/export-receipts/{id}/edit(id=${receipt.id})}"
+                               class="btn btn-primary">
+                                <i class="bi bi-pencil"></i> Sửa thông tin
+                            </a>
+                            <!-- Phiếu CHO_MUON: nút "Ghi nhận trả hàng" -->
+                            <form th:if="${receipt.trangThai.name() == 'XUAT_KHO' and receipt.lyDo != null and receipt.lyDo.name() == 'CHO_MUON'}"
+                                  th:action="@{/export-receipts/{id}/cancel(id=${receipt.id})}"
+                                  method="post"
+                                  th:data-nguoi-nhan="${receipt.nguoiNhan}"
+                                  onsubmit="return confirmTraHang(this);">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-arrow-return-left"></i> Ghi nhận trả hàng
+                                </button>
+                            </form>
+                            <!-- Phiếu khác: nút "Hủy phiếu" thông thường -->
+                            <form th:if="${receipt.trangThai.name() == 'XUAT_KHO' and (receipt.lyDo == null or receipt.lyDo.name() != 'CHO_MUON')}"
+                                  th:action="@{/export-receipts/{id}/cancel(id=${receipt.id})}"
+                                  method="post"
+                                  onsubmit="return confirm('Hủy phiếu này sẽ hoàn lại tồn kho cho tất cả đồ cổ. Bạn có chắc?');">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="bi bi-x-circle"></i> Hủy phiếu (hoàn lại tồn kho)
+                                </button>
+                            </form>
+                        </div>
                     </div>
 
                 </div>
@@ -157,5 +180,11 @@
     </div>
 
     <th:block th:replace="~{fragments/footer :: scripts}"></th:block>
+    <script>
+        function confirmTraHang(form) {
+            var nguoiNhan = (form.dataset.nguoiNhan || 'người mượn').replace(/'/g, "\u2019");
+            return confirm('Xác nhận đã nhận lại hàng từ \'' + nguoiNhan + '\'? Tồn kho sẽ được hoàn lại và yêu cầu kiểm tra tình trạng sẽ được tạo.');
+        }
+    </script>
 </body>
 </html>

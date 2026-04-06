@@ -38,7 +38,8 @@
                                     <div class="col-md-4">
                                         <div class="mb-3">
                                             <label class="form-label">Ngày xuất <span class="text-danger">*</span></label>
-                                            <input type="date" class="form-control" th:field="*{ngayXuat}" required>
+                                            <input type="date" class="form-control" th:field="*{ngayXuat}"
+                                                   th:max="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}" required>
                                         </div>
                                     </div>
                                     <div class="col-md-4">

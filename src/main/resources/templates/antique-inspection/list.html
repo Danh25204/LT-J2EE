@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Kiểm tra đồ cổ')}"></head>
+<body class="sb-nav-fixed">
+
+    <div th:replace="~{fragments/header :: topnav}"></div>
+
+    <div id="layoutSidenav">
+        <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+        <div id="layoutSidenav_content">
+            <main>
+                <div class="container-fluid px-4">
+                    <h1 class="mt-4">
+                        <i class="bi bi-clipboard-check me-2 text-warning"></i>Kiểm tra đồ cổ
+                    </h1>
+                    <ol class="breadcrumb mb-4">
+                        <li class="breadcrumb-item"><a th:href="@{/dashboard}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Kiểm tra đồ cổ</li>
+                    </ol>
+
+                    <!-- Thông báo -->
+                    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="bi bi-check-circle me-1"></i>
+                        <span th:text="${successMessage}"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-circle me-1"></i>
+                        <span th:text="${errorMessage}"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+
+                    <!-- Thống kê nhanh -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body d-flex align-items-center gap-3">
+                                    <div class="rounded-circle bg-danger bg-opacity-10 p-3">
+                                        <i class="bi bi-exclamation-triangle fs-4 text-danger"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-muted small">Đang chờ kiểm tra</div>
+                                        <div class="fw-bold fs-5 text-danger" th:text="${pendingCount}">0</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body d-flex align-items-center gap-3">
+                                    <div class="rounded-circle bg-info bg-opacity-10 p-3">
+                                        <i class="bi bi-list-check fs-4 text-info"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-muted small">Tổng yêu cầu</div>
+                                        <div class="fw-bold fs-5" th:text="${totalElements}">0</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bộ lọc -->
+                    <div class="card mb-3 shadow-sm">
+                        <div class="card-header py-2">
+                            <i class="bi bi-funnel me-1"></i> <strong>Bộ lọc</strong>
+                        </div>
+                        <div class="card-body py-3">
+                            <form method="get" th:action="@{/antique-inspections}" class="row g-2 align-items-end">
+                                <div class="col-md-2">
+                                    <label class="form-label mb-1 small fw-semibold">Trạng thái</label>
+                                    <select name="trangThai" class="form-select form-select-sm">
+                                        <option value="">-- Tất cả --</option>
+                                        <option th:each="tt : ${trangThaiList}"
+                                                th:value="${tt.name()}"
+                                                th:text="${tt.moTa}"
+                                                th:selected="${selectedTrangThai != null and selectedTrangThai.name() == tt.name()}">
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label mb-1 small fw-semibold">Lý do</label>
+                                    <select name="lyDo" class="form-select form-select-sm">
+                                        <option value="">-- Tất cả --</option>
+                                        <option th:each="ld : ${lyDoList}"
+                                                th:value="${ld.name()}"
+                                                th:text="${ld.moTa}"
+                                                th:selected="${selectedLyDo != null and selectedLyDo.name() == ld.name()}">
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label mb-1 small fw-semibold">Từ ngày</label>
+                                    <input type="date" name="tuNgay" class="form-control form-control-sm"
+                                           th:value="${tuNgay}">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label mb-1 small fw-semibold">Đến ngày</label>
+                                    <input type="date" name="denNgay" class="form-control form-control-sm"
+                                           th:value="${denNgay}">
+                                </div>
+                                <div class="col-md-4 d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary btn-sm">
+                                        <i class="bi bi-search me-1"></i>Lọc
+                                    </button>
+                                    <a th:href="@{/antique-inspections}" class="btn btn-outline-secondary btn-sm">
+                                        <i class="bi bi-x-circle me-1"></i>Xóa lọc
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Bảng danh sách -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header py-2">
+                            <i class="bi bi-clipboard-check me-1"></i>
+                            <strong>Danh sách yêu cầu kiểm tra</strong>
+                            <span class="badge bg-secondary ms-1" th:text="${totalElements}">0</span>
+                        </div>
+                        <div class="card-body p-0">
+                            <!-- Rỗng -->
+                            <div th:if="${#lists.isEmpty(inspections)}"
+                                 class="text-center text-muted py-5">
+                                <i class="bi bi-clipboard-x fs-1 d-block mb-2"></i>
+                                Không có yêu cầu kiểm tra nào.
+                            </div>
+
+                            <!-- Bảng -->
+                            <div th:unless="${#lists.isEmpty(inspections)}" class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th style="width:50px">#</th>
+                                            <th>Đồ cổ</th>
+                                            <th style="width:160px">Lý do kiểm tra</th>
+                                            <th>Mô tả</th>
+                                            <th style="width:100px">Số ngày tồn</th>
+                                            <th style="width:130px">Trạng thái</th>
+                                            <th style="width:130px">Ngày tạo</th>
+                                            <th style="width:160px">Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="item, iStat : ${inspections}"
+                                            th:classappend="${item.trangThai.name() == 'CHO_KIEM_TRA'} ? 'table-warning' : ''">
+                                            <td class="text-muted small"
+                                                th:text="${currentPage * pageSize + iStat.count}">1</td>
+
+                                            <!-- Đồ cổ -->
+                                            <td>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <img th:if="${item.anhChinh != null}"
+                                                         th:src="@{'/uploads/' + ${item.anhChinh}}"
+                                                         class="rounded" style="width:40px;height:40px;object-fit:cover;"
+                                                         alt="">
+                                                    <div class="bg-secondary rounded d-flex align-items-center justify-content-center"
+                                                         th:unless="${item.anhChinh != null}"
+                                                         style="width:40px;height:40px;">
+                                                        <i class="bi bi-image text-white small"></i>
+                                                    </div>
+                                                    <div>
+                                                        <div class="fw-semibold small" th:text="${item.tenDocCo}">-</div>
+                                                        <div class="text-muted" style="font-size:0.75rem;"
+                                                             th:text="${item.maDocCo}">-</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+
+                                            <!-- Lý do -->
+                                            <td>
+                                                <span th:class="'badge bg-' + ${item.lyDoBadgeColor}"
+                                                      th:text="${item.lyDoMoTa}">-</span>
+                                            </td>
+
+                                            <!-- Mô tả -->
+                                            <td>
+                                                <small th:text="${item.moTa}" class="text-muted"></small>
+                                                <!-- Kết quả kiểm tra nếu đã xong -->
+                                                <div th:if="${item.ketQuaKiemTra != null and not #strings.isEmpty(item.ketQuaKiemTra)}"
+                                                     class="mt-1">
+                                                    <small class="text-success">
+                                                        <i class="bi bi-check2 me-1"></i>
+                                                        <span th:text="${item.ketQuaKiemTra}"></span>
+                                                    </small>
+                                                </div>
+                                            </td>
+
+                                            <!-- Số ngày tồn kho -->
+                                            <td class="text-center">
+                                                <span th:if="${item.soNgayTonKho != null}"
+                                                      class="badge bg-warning text-dark"
+                                                      th:text="${item.soNgayTonKho + ' ngày'}">-</span>
+                                                <span th:unless="${item.soNgayTonKho != null}"
+                                                      class="text-muted small">—</span>
+                                            </td>
+
+                                            <!-- Trạng thái -->
+                                            <td>
+                                                <span th:class="'badge bg-' + ${item.trangThaiBadgeColor}"
+                                                      th:text="${item.trangThaiMoTa}">-</span>
+                                                <div th:if="${item.ngayKiemTra != null}"
+                                                     class="text-muted mt-1" style="font-size:0.7rem;"
+                                                     th:text="${#temporals.format(item.ngayKiemTra, 'dd/MM/yyyy')}">
+                                                </div>
+                                            </td>
+
+                                            <!-- Ngày tạo -->
+                                            <td class="text-muted small"
+                                                th:text="${item.createdAt != null ? #temporals.format(item.createdAt, 'dd/MM/yyyy HH:mm') : '—'}">
+                                            </td>
+
+                                            <!-- Thao tác -->
+                                            <td>
+                                                <div th:if="${item.trangThai.name() == 'CHO_KIEM_TRA'}"
+                                                     class="d-flex gap-1">
+                                                    <!-- Nút đã kiểm tra → mở modal -->
+                                                    <button type="button"
+                                                            class="btn btn-success btn-sm"
+                                                            data-bs-toggle="modal"
+                                                            th:data-bs-target="'#modalComplete' + ${item.id}"
+                                                            title="Đánh dấu đã kiểm tra">
+                                                        <i class="bi bi-check2-circle"></i>
+                                                    </button>
+                                                    <!-- Nút bỏ qua -->
+                                                    <form th:action="@{'/antique-inspections/' + ${item.id} + '/skip'}"
+                                                          method="post"
+                                                          onsubmit="return confirm('Bỏ qua yêu cầu kiểm tra này?')">
+                                                        <button type="submit" class="btn btn-outline-secondary btn-sm"
+                                                                title="Bỏ qua">
+                                                            <i class="bi bi-slash-circle"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                                <span th:unless="${item.trangThai.name() == 'CHO_KIEM_TRA'}"
+                                                      class="text-muted small">—</span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Phân trang -->
+                    <nav th:if="${totalPages > 1}">
+                        <ul class="pagination pagination-sm justify-content-center">
+                            <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                                <a class="page-link"
+                                   th:href="@{/antique-inspections(page=${currentPage - 1},
+                                       trangThai=${selectedTrangThai},
+                                       lyDo=${selectedLyDo},
+                                       tuNgay=${tuNgay},
+                                       denNgay=${denNgay})}">
+                                    &laquo;
+                                </a>
+                            </li>
+                            <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                                th:classappend="${i == currentPage} ? 'active'">
+                                <a class="page-link"
+                                   th:text="${i + 1}"
+                                   th:href="@{/antique-inspections(page=${i},
+                                       trangThai=${selectedTrangThai},
+                                       lyDo=${selectedLyDo},
+                                       tuNgay=${tuNgay},
+                                       denNgay=${denNgay})}">
+                                </a>
+                            </li>
+                            <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                                <a class="page-link"
+                                   th:href="@{/antique-inspections(page=${currentPage + 1},
+                                       trangThai=${selectedTrangThai},
+                                       lyDo=${selectedLyDo},
+                                       tuNgay=${tuNgay},
+                                       denNgay=${denNgay})}">
+                                    &raquo;
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+
+                </div>
+            </main>
+
+            <div th:replace="~{fragments/footer :: footer}"></div>
+        </div>
+    </div>
+
+    <!-- ===== MODALS: Đánh dấu đã kiểm tra ===== -->
+    <div th:each="item : ${inspections}"
+         th:if="${item.trangThai.name() == 'CHO_KIEM_TRA'}">
+        <div class="modal fade" th:id="'modalComplete' + ${item.id}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-check2-circle me-2 text-success"></i>Đánh dấu đã kiểm tra
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form th:action="@{'/antique-inspections/' + ${item.id} + '/complete'}" method="post">
+                        <div class="modal-body">
+                            <p class="mb-3">
+                                <strong>Đồ cổ:</strong>
+                                <span th:text="${item.tenDocCo}"></span>
+                                <span class="text-muted ms-1 small" th:text="'(' + ${item.maDocCo} + ')'"></span>
+                            </p>
+                            <p class="text-muted small mb-3" th:text="${item.moTa}"></p>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">
+                                    Kết quả kiểm tra
+                                    <span class="text-muted small">(không bắt buộc)</span>
+                                </label>
+                                <textarea name="ketQua" class="form-control" rows="3" maxlength="1000"
+                                          placeholder="Nhập kết quả kiểm tra tình trạng đồ cổ..."></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check2 me-1"></i>Xác nhận đã kiểm tra
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: scripts}"></div>
+</body>
+</html>

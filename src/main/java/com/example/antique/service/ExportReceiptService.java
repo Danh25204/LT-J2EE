@@ -8,12 +8,15 @@ import com.example.antique.repository.ExportReceiptRepository;
 import com.example.antique.repository.InventoryRepository;
 import com.example.antique.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -31,6 +34,8 @@ public class ExportReceiptService {
     private final AntiqueRepository antiqueRepository;
     private final InventoryRepository inventoryRepository;
     private final UserRepository userRepository;
+    private final WarehouseActivityService warehouseActivityService;
+    private final AntiqueInspectionService antiqueInspectionService;
 
     /**
      * Lấy tất cả phiếu xuất, mới nhất trước.
@@ -64,6 +69,12 @@ public class ExportReceiptService {
         for (ExportReceiptDetailDTO detailDTO : dto.getDetails()) {
             if (!antiqueIds.add(detailDTO.getAntiqueId())) {
                 throw new RuntimeException("Trùng đồ cổ ID: " + detailDTO.getAntiqueId() + " trong phiếu xuất!");
+            }
+            if (detailDTO.getSoLuong() == null || detailDTO.getSoLuong() <= 0) {
+                throw new RuntimeException("Số lượng phải lớn hơn 0!");
+            }
+            if (detailDTO.getDonGia() == null || detailDTO.getDonGia().compareTo(java.math.BigDecimal.ZERO) < 0) {
+                throw new RuntimeException("Đơn giá không hợp lệ (phải >= 0)!");
             }
         }
 
@@ -111,6 +122,10 @@ public class ExportReceiptService {
 
         receipt.tinhLaiTongGiaTri();
         ExportReceipt saved = exportReceiptRepository.save(receipt);
+
+        // Ghi lịch sử hoạt động
+        warehouseActivityService.logXuatKho(saved);
+
         return convertToDTO(saved);
     }
 
@@ -137,6 +152,12 @@ public class ExportReceiptService {
 
         receipt.setTrangThai(TrangThaiPhieuXuat.HUY);
         exportReceiptRepository.save(receipt);
+
+        // Ghi lịch sử hoạt động
+        warehouseActivityService.logHuyXuat(receipt);
+
+        // Nếu là phiếu CHO_MUON → đồ cổ được trả lại, cần kiểm tra tình trạng
+        antiqueInspectionService.triggerKiemTraSauChoMuon(receipt);
     }
 
     /**
@@ -147,17 +168,16 @@ public class ExportReceiptService {
         String yearMonth = date.format(DateTimeFormatter.ofPattern("yyyyMM"));
         String prefix = "PX-" + yearMonth + "-";
 
-        // Tìm số thứ tự lớn nhất đã dùng (tránh trùng khi có phiếu bị hủy)
-        java.util.Optional<Integer> maxSeq = exportReceiptRepository.findAll()
-                .stream()
-                .filter(r -> r.getMaPhieuXuat().startsWith(prefix))
-                .map(r -> {
-                    String seq = r.getMaPhieuXuat().substring(prefix.length());
-                    try { return Integer.parseInt(seq); } catch (NumberFormatException e) { return 0; }
+        // Dùng MAX query trực tiếp trên DB (an toàn hơn findAll + stream)
+        int nextSeq = exportReceiptRepository.findMaxMaPhieuByPrefix(prefix)
+                .map(maxMa -> {
+                    try {
+                        return Integer.parseInt(maxMa.substring(prefix.length())) + 1;
+                    } catch (NumberFormatException e) {
+                        return 1;
+                    }
                 })
-                .max(Integer::compareTo);
-
-        int nextSeq = maxSeq.orElse(0) + 1;
+                .orElse(1);
         return prefix + String.format("%03d", nextSeq);
     }
 
@@ -218,4 +238,32 @@ public class ExportReceiptService {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng: " + username));
     }
+
+    /**
+     * Lấy danh sách phiếu xuất có phân trang và lọc theo ngày.
+     */
+    @Transactional(readOnly = true)
+    public Page<ExportReceiptDTO> findAllPaged(LocalDate tuNgay, LocalDate denNgay, int page, int size) {
+        return exportReceiptRepository.findByDateFilter(tuNgay, denNgay, PageRequest.of(page, size))
+                .map(this::convertToDTO);
+    }
+
+    /**
+     * Sửa thông tin phiếu xuất (header-only: ngày, lý do, người nhận, ghi chú).
+     * Không cho phép sửa dòng chi tiết vì sẽ ảnh hưởng tồn kho.
+     */
+    @Transactional
+    public ExportReceiptDTO updateHeader(Long id, ExportReceiptDTO dto) {
+        ExportReceipt receipt = exportReceiptRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu xuất ID: " + id));
+        if (receipt.getTrangThai() == TrangThaiPhieuXuat.HUY) {
+            throw new RuntimeException("Không thể sửa phiếu đã hủy!");
+        }
+        receipt.setNgayXuat(dto.getNgayXuat() != null ? dto.getNgayXuat() : receipt.getNgayXuat());
+        receipt.setLyDo(dto.getLyDo() != null ? dto.getLyDo() : receipt.getLyDo());
+        receipt.setNguoiNhan(dto.getNguoiNhan());
+        receipt.setGhiChu(dto.getGhiChu());
+        return convertToDTO(exportReceiptRepository.save(receipt));
+    }
+
 }
